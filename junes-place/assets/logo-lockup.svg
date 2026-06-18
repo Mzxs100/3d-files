@@ -1,0 +1,13 @@
+<svg width="320" height="96" viewBox="0 0 320 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="June's Place">
+  <g transform="translate(0,-8) scale(0.92)">
+    <ellipse cx="48" cy="92" rx="32" ry="5.5" fill="currentColor" opacity="0.14"/>
+    <path d="M22 48h44v15c0 12.2-9.8 22-22 22s-22-9.8-22-22V48Z" fill="currentColor"/>
+    <path d="M66 51h6.5c7.2 0 13 5.8 13 13s-5.8 13-13 13H68v-7.4h4.5c3.1 0 5.6-2.5 5.6-5.6s-2.5-5.6-5.6-5.6H66V51Z" fill="currentColor"/>
+    <ellipse cx="44" cy="48" rx="22" ry="5" fill="#f7f1e6" opacity="0.92"/>
+    <path d="M37 40c-4-4-4-9 0-13s4-9 0-13" stroke="#c8a04b" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+    <path d="M51 41c-3.2-3.2-3.2-7.2 0-10.4" stroke="#c8a04b" stroke-width="3.4" stroke-linecap="round" fill="none" opacity="0.75"/>
+    <path d="M67 12 Q67 21 76 21 Q67 21 67 30 Q67 21 58 21 Q67 21 67 12 Z" fill="#c8a04b"/>
+  </g>
+  <text x="98" y="48" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="700" fill="currentColor">June&#8217;s</text>
+  <text x="98" y="78" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" letter-spacing="6" fill="#c8a04b">PLACE</text>
+</svg>

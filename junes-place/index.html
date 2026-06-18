@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3b2616" />
+  <title>June&rsquo;s Place — Rexburg&rsquo;s Coziest Coffee Shop</title>
+  <meta name="description" content="June's Place is the heart of Rexburg's coffee culture — handcrafted coffee, locally sourced treats, eclectic art, and a whimsical, welcoming room on Main Street." />
+
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ============ SVG ICON SPRITE (inlined for zero extra request) ============ -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0" aria-hidden="true">
+    <symbol id="ico-cup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h12v6a6 6 0 0 1-12 0V9Z"/><path d="M16 10h2.5a2.5 2.5 0 0 1 0 5H16"/><path d="M7 5c-1.2 1.2-1.2 2.8 0 4M11 5c-1.2 1.2-1.2 2.8 0 4"/></symbol>
+    <symbol id="ico-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14Z"/><path d="M5 19c3-5 6-8 11-10"/></symbol>
+    <symbol id="ico-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-4.5 7-8 7-11a7 7 0 1 0-14 0c0 3 3 6.5 7 11Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="ico-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="ico-sparkle" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2q0 6 6 6-6 0-6 6 0-6-6-6 6 0 6-6Z"/><circle cx="19" cy="18" r="1.4"/><circle cx="5" cy="5" r="1"/></symbol>
+    <symbol id="ico-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20S4 14.5 4 9.2A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 8 2.2C20 14.5 12 20 12 20Z"/></symbol>
+    <symbol id="ico-store" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9 5.5 4h13L20 9"/><path d="M4 9h16v3a2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-5 0V9Z"/><path d="M5 14v6h14v-6"/></symbol>
+    <symbol id="ico-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="ico-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="ico-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="ico-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.5"/><circle cx="17" cy="7" r="1"/></symbol>
+    <symbol id="ico-facebook" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 7H15a2.5 2.5 0 0 0-2.5 2.5V13m0 0V21m0-8H10m2.5 0H15"/></symbol>
+    <symbol id="ico-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h3l1.5 4-2 1.5a11 11 0 0 0 5 5L17 13l4 1.5V18a2 2 0 0 1-2 2A15 15 0 0 1 4 6a2 2 0 0 1 2-2Z"/></symbol>
+  </svg>
+
+  <!-- ============ NAV ============ -->
+  <header class="nav" id="nav">
+    <div class="nav__inner">
+      <a class="nav__brand" href="#top" aria-label="June's Place home">
+        <svg class="nav__mark" viewBox="0 0 120 120" aria-hidden="true"><use href="#brandmark"/></svg>
+        <span class="nav__word">June&rsquo;s Place</span>
+      </a>
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#menu">Menu</a>
+        <a href="#story">Story</a>
+        <a href="#room">The Room</a>
+        <a href="#visit">Visit</a>
+      </nav>
+      <a href="#visit" class="nav__cta">Find us</a>
+      <button class="nav__toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="24" height="24"><use href="#ico-menu"/></svg>
+      </button>
+    </div>
+    <div class="nav__drawer" id="navDrawer" hidden>
+      <a href="#menu">Menu</a>
+      <a href="#story">Story</a>
+      <a href="#room">The Room</a>
+      <a href="#visit">Visit</a>
+      <a href="#visit" class="nav__drawer-cta">Find us <svg viewBox="0 0 24 24" width="18" height="18"><use href="#ico-arrow"/></svg></a>
+    </div>
+  </header>
+
+  <!-- reusable detailed brandmark (used by nav + hero) -->
+  <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+    <symbol id="brandmark" viewBox="0 0 120 120">
+      <ellipse cx="58" cy="98" rx="40" ry="7" fill="currentColor" opacity="0.16"/>
+      <path d="M26 50h54v18c0 14.9-12.1 27-27 27S26 82.9 26 68V50z" fill="currentColor"/>
+      <path d="M80 54h8c8.8 0 16 7.2 16 16s-7.2 16-16 16h-6v-9h6c3.9 0 7-3.1 7-7s-3.1-7-7-7h-8v-9z" fill="currentColor"/>
+      <ellipse cx="53" cy="50" rx="27" ry="6.5" fill="#f7f1e6" opacity="0.92"/>
+      <path d="M45 40c-5-5-5-11 0-16s5-11 0-16" stroke="#c8a04b" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+      <path d="M62 41c-4-4-4-9 0-13" stroke="#c8a04b" stroke-width="4.2" stroke-linecap="round" fill="none" opacity="0.75"/>
+      <path d="M82 11 Q82 22 93 22 Q82 22 82 33 Q82 22 71 22 Q82 22 82 11 Z" fill="#c8a04b"/>
+      <circle cx="96" cy="36" r="2.1" fill="#c8a04b"/>
+      <circle cx="69" cy="13" r="1.5" fill="#c8a04b" opacity="0.8"/>
+    </symbol>
+  </svg>
+
+  <main id="top">
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+      <div class="hero__glow" aria-hidden="true"></div>
+      <div class="hero__inner">
+        <svg class="hero__mark reveal" viewBox="0 0 120 120" aria-hidden="true"><use href="#brandmark"/></svg>
+        <p class="hero__eyebrow reveal">Rexburg, Idaho &middot; Est. 2018</p>
+        <h1 class="hero__title reveal">A little magic<br/>in every cup.</h1>
+        <p class="hero__sub reveal">Handcrafted coffee, locally sourced treats, and the coziest corner on Main Street. Greeted by name, every time.</p>
+        <div class="hero__actions reveal">
+          <a href="#menu" class="btn btn--primary">See the menu <svg viewBox="0 0 24 24" width="20" height="20"><use href="#ico-arrow"/></svg></a>
+          <a href="#visit" class="btn btn--ghost">Plan a visit</a>
+        </div>
+        <p class="hero__rating reveal">★★★★★ <span>4.9 from nearly 700 neighbors</span></p>
+      </div>
+    </section>
+
+    <!-- ============ MARQUEE ============ -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        <span>Espresso</span><span class="dot">✦</span><span>Local muffins</span><span class="dot">✦</span><span>Reed&rsquo;s Dairy ice cream</span><span class="dot">✦</span><span>Hot cocoa</span><span class="dot">✦</span><span>Fruit smoothies</span><span class="dot">✦</span><span>Paisley cheesecakes</span><span class="dot">✦</span>
+        <span>Espresso</span><span class="dot">✦</span><span>Local muffins</span><span class="dot">✦</span><span>Reed&rsquo;s Dairy ice cream</span><span class="dot">✦</span><span>Hot cocoa</span><span class="dot">✦</span><span>Fruit smoothies</span><span class="dot">✦</span><span>Paisley cheesecakes</span><span class="dot">✦</span>
+      </div>
+    </div>
+
+    <!-- ============ VALUE PILLARS ============ -->
+    <section class="pillars" id="story">
+      <div class="section-head reveal">
+        <p class="eyebrow">Why everyone keeps coming back</p>
+        <h2>Not a chain. A living room<br/>that happens to serve coffee.</h2>
+      </div>
+      <div class="pillars__grid">
+        <article class="pillar reveal">
+          <span class="pillar__ico"><svg viewBox="0 0 24 24"><use href="#ico-cup"/></svg></span>
+          <h3>Crafted, never rushed</h3>
+          <p>Specialty espresso, teas, hot chocolate, 100% fruit smoothies and specialty sodas — pulled and poured by baristas who know your order.</p>
+        </article>
+        <article class="pillar reveal">
+          <span class="pillar__ico"><svg viewBox="0 0 24 24"><use href="#ico-leaf"/></svg></span>
+          <h3>Sourced down the street</h3>
+          <p>Reed&rsquo;s Dairy ice cream, house-made breakfast sandwiches, local muffins, and cake pops &amp; cheesecakes from family-run Paisley Cakes.</p>
+        </article>
+        <article class="pillar reveal">
+          <span class="pillar__ico"><svg viewBox="0 0 24 24"><use href="#ico-sparkle"/></svg></span>
+          <h3>A little whimsy</h3>
+          <p>Eclectic furniture, rotating local art, festive seasonal decor and a famous Harry Potter birthday bash every July 31st.</p>
+        </article>
+        <article class="pillar reveal">
+          <span class="pillar__ico"><svg viewBox="0 0 24 24"><use href="#ico-heart"/></svg></span>
+          <h3>Owned with heart</h3>
+          <p>June Lockhart opened the doors in 2018 and still greets regulars by name, working right alongside her baristas.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ MENU ============ -->
+    <section class="menu" id="menu">
+      <div class="section-head reveal">
+        <p class="eyebrow">The menu</p>
+        <h2>Small list. No misses.</h2>
+        <p class="section-lede">A tight, lovingly-made selection — hot, iced, sweet, and seasonal. Prices are a friendly neighborhood kind of fair.</p>
+      </div>
+
+      <div class="menu__cols">
+        <div class="menu-card reveal">
+          <h3><svg viewBox="0 0 24 24" class="menu-card__ico"><use href="#ico-cup"/></svg> Espresso &amp; Coffee</h3>
+          <ul>
+            <li><span>Latte</span><span class="lead"></span><span class="price">4.75</span></li>
+            <li><span>Cappuccino</span><span class="lead"></span><span class="price">4.50</span></li>
+            <li><span>Americano</span><span class="lead"></span><span class="price">3.75</span></li>
+            <li><span>Cold brew</span><span class="lead"></span><span class="price">4.50</span></li>
+            <li><span>Add a house syrup</span><span class="lead"></span><span class="price np">+0.75</span></li>
+          </ul>
+        </div>
+        <div class="menu-card reveal">
+          <h3><svg viewBox="0 0 24 24" class="menu-card__ico"><use href="#ico-sparkle"/></svg> Cozy &amp; Cool</h3>
+          <ul>
+            <li><span>Hot chocolate</span><span class="lead"></span><span class="price">4.25</span></li>
+            <li><span>Specialty soda</span><span class="lead"></span><span class="price">4.00</span></li>
+            <li><span>100% fruit smoothie</span><span class="lead"></span><span class="price">5.50</span></li>
+            <li><span>Loose-leaf tea</span><span class="lead"></span><span class="price">3.50</span></li>
+            <li><span>Reed&rsquo;s Dairy scoop</span><span class="lead"></span><span class="price">3.75</span></li>
+          </ul>
+        </div>
+        <div class="menu-card reveal">
+          <h3><svg viewBox="0 0 24 24" class="menu-card__ico"><use href="#ico-store"/></svg> From the Case</h3>
+          <ul>
+            <li><span>Breakfast sandwich</span><span class="lead"></span><span class="price">6.50</span></li>
+            <li><span>Local muffin</span><span class="lead"></span><span class="price">3.25</span></li>
+            <li><span>Paisley cake pop</span><span class="lead"></span><span class="price">3.50</span></li>
+            <li><span>Paisley cheesecake</span><span class="lead"></span><span class="price">5.75</span></li>
+            <li><span>Daily local bake</span><span class="lead"></span><span class="price np">MP</span></li>
+          </ul>
+        </div>
+      </div>
+      <p class="menu__note reveal">Menu &amp; pricing shown for illustration — call ahead for today&rsquo;s bakes and seasonal specials.</p>
+    </section>
+
+    <!-- ============ THE ROOM (theme showcase) ============ -->
+    <section class="room" id="room">
+      <div class="section-head section-head--light reveal">
+        <p class="eyebrow eyebrow--gold">Step inside</p>
+        <h2>The room is the whole point.</h2>
+        <p class="section-lede">Reviewers love how un-corporate it feels: mismatched chairs, warm lamplight, art that changes with the seasons, and playful wizarding-world touches tucked into every shelf.</p>
+      </div>
+      <div class="room__grid">
+        <figure class="room__tile room__tile--tall reveal">
+          <div class="tile-art tile-art--cozy"><span class="tile-badge"><svg viewBox="0 0 24 24"><use href="#ico-heart"/></svg> Cozy seating</span></div>
+          <figcaption>Eclectic, mismatched furniture you can sink into for hours.</figcaption>
+        </figure>
+        <figure class="room__tile reveal">
+          <div class="tile-art tile-art--art"><span class="tile-badge"><svg viewBox="0 0 24 24"><use href="#ico-sparkle"/></svg> Local art</span></div>
+          <figcaption>Walls that rotate work from Rexburg makers.</figcaption>
+        </figure>
+        <figure class="room__tile reveal">
+          <div class="tile-art tile-art--magic"><span class="tile-badge"><svg viewBox="0 0 24 24"><use href="#ico-sparkle"/></svg> A touch of wizardry</span></div>
+          <figcaption>Hogwarts-flavored details &amp; a July 31st birthday party.</figcaption>
+        </figure>
+        <figure class="room__tile room__tile--wide reveal">
+          <div class="tile-art tile-art--market"><span class="tile-badge"><svg viewBox="0 0 24 24"><use href="#ico-store"/></svg> Local makers&rsquo; market</span></div>
+          <figcaption>Shelves of local vendor goods to browse while you sip.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ QUOTE ============ -->
+    <section class="quote reveal">
+      <svg class="quote__mark" viewBox="0 0 120 120" aria-hidden="true"><use href="#brandmark"/></svg>
+      <blockquote>&ldquo;Friendly people, local art, and eclectic furniture — it&rsquo;s everything a polished corporate coffee shop isn&rsquo;t.&rdquo;</blockquote>
+      <cite>— the kind of thing regulars say about June&rsquo;s</cite>
+    </section>
+
+    <!-- ============ VISIT ============ -->
+    <section class="visit" id="visit">
+      <div class="section-head reveal">
+        <p class="eyebrow">Come say hi</p>
+        <h2>Find us on Main Street.</h2>
+      </div>
+      <div class="visit__grid">
+        <a class="visit-card reveal" href="https://maps.google.com/?q=36+E+Main+St+Rexburg+ID" target="_blank" rel="noopener">
+          <span class="visit-card__ico"><svg viewBox="0 0 24 24"><use href="#ico-pin"/></svg></span>
+          <h3>Location</h3>
+          <p>36 E Main Street<br/>Rexburg, Idaho</p>
+          <span class="visit-card__go">Get directions <svg viewBox="0 0 24 24" width="18" height="18"><use href="#ico-arrow"/></svg></span>
+        </a>
+        <div class="visit-card reveal">
+          <span class="visit-card__ico"><svg viewBox="0 0 24 24"><use href="#ico-clock"/></svg></span>
+          <h3>Hours</h3>
+          <p>Mon–Fri &nbsp;7a – 8p<br/>Saturday &nbsp;8a – 8p<br/>Sunday &nbsp;Closed</p>
+          <span class="visit-card__go visit-card__go--muted">Hours vary by season</span>
+        </div>
+        <a class="visit-card reveal" href="tel:+12083569411">
+          <span class="visit-card__ico"><svg viewBox="0 0 24 24"><use href="#ico-phone"/></svg></span>
+          <h3>Call ahead</h3>
+          <p>(208) 356-9411<br/>For today&rsquo;s bakes &amp; specials</p>
+          <span class="visit-card__go">Tap to call <svg viewBox="0 0 24 24" width="18" height="18"><use href="#ico-arrow"/></svg></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ============ CTA BANNER ============ -->
+    <section class="cta reveal">
+      <div class="cta__inner">
+        <h2>Your table&rsquo;s waiting.</h2>
+        <p>Swing by Main Street, order something warm, and stay a while.</p>
+        <a href="https://maps.google.com/?q=36+E+Main+St+Rexburg+ID" target="_blank" rel="noopener" class="btn btn--primary">Get directions <svg viewBox="0 0 24 24" width="20" height="20"><use href="#ico-arrow"/></svg></a>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <svg class="footer__mark" viewBox="0 0 120 120" aria-hidden="true"><use href="#brandmark"/></svg>
+        <div>
+          <p class="footer__name">June&rsquo;s Place</p>
+          <p class="footer__tag">Rexburg&rsquo;s coziest cup since 2018.</p>
+        </div>
+      </div>
+      <nav class="footer__links" aria-label="Footer">
+        <a href="#menu">Menu</a>
+        <a href="#story">Story</a>
+        <a href="#room">The Room</a>
+        <a href="#visit">Visit</a>
+      </nav>
+      <div class="footer__social">
+        <a href="https://www.facebook.com/coffeecocoaandmore/" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24"><use href="#ico-facebook"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24"><use href="#ico-instagram"/></svg></a>
+        <a href="tel:+12083569411" aria-label="Phone"><svg viewBox="0 0 24 24"><use href="#ico-phone"/></svg></a>
+      </div>
+    </div>
+    <p class="footer__fine">36 E Main Street, Rexburg, ID &middot; (208) 356-9411 &nbsp;·&nbsp; Fan-made concept site celebrating a local favorite. Not officially affiliated.</p>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>

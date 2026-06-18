@@ -1,0 +1,17 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="June's Place coffee cup mark">
+  <!-- saucer shadow -->
+  <ellipse cx="58" cy="98" rx="40" ry="7" fill="currentColor" opacity="0.16"/>
+  <!-- cup body -->
+  <path d="M26 50h54v18c0 14.9-12.1 27-27 27S26 82.9 26 68V50z" fill="currentColor"/>
+  <!-- handle -->
+  <path d="M80 54h8c8.8 0 16 7.2 16 16s-7.2 16-16 16h-6v-9h6c3.9 0 7-3.1 7-7s-3.1-7-7-7h-8v-9z" fill="currentColor"/>
+  <!-- coffee surface -->
+  <ellipse cx="53" cy="50" rx="27" ry="6.5" fill="#f7f1e6" opacity="0.92"/>
+  <!-- steam swirls -->
+  <path d="M45 40c-5-5-5-11 0-16s5-11 0-16" stroke="#c8a04b" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+  <path d="M62 41c-4-4-4-9 0-13" stroke="#c8a04b" stroke-width="4.2" stroke-linecap="round" fill="none" opacity="0.75"/>
+  <!-- sparkle nod to the shop's whimsical theme -->
+  <path d="M82 11 Q82 22 93 22 Q82 22 82 33 Q82 22 71 22 Q82 22 82 11 Z" fill="#c8a04b"/>
+  <circle cx="96" cy="36" r="2.1" fill="#c8a04b"/>
+  <circle cx="69" cy="13" r="1.5" fill="#c8a04b" opacity="0.8"/>
+</svg>

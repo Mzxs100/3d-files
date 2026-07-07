@@ -225,6 +225,10 @@
   .metric{ display:flex; flex-direction:column; }
   .metric b{ font-size:19px; font-weight:800; font-variant-numeric: tabular-nums; }
   .metric span{ font-size:10px; font-weight:700; text-transform:uppercase; opacity:0.6; letter-spacing:0.3px; }
+  .metric b.temp-blue{ color: var(--e-blue); }
+  .metric b.temp-green{ color: var(--e-green); }
+  .metric b.temp-yellow{ color: var(--e-yellow); }
+  .metric b.temp-red{ color: var(--e-red); }
 
   .pill{
     margin-top:auto;
@@ -243,6 +247,8 @@
   .pill.on .dot{ background: var(--e-white); }
   .pill.warn{ background: var(--e-yellow); color: var(--e-black); border-color: var(--e-yellow); }
   .pill.warn .dot{ background: var(--e-black); }
+  .pill.alert{ background: var(--e-red); color: var(--e-white); border-color: var(--e-red); }
+  .pill.alert .dot{ background: var(--e-white); }
   .pill.off{ background:transparent; color: var(--e-black); opacity:0.55; }
 
   .side{
@@ -373,10 +379,12 @@
                 <div class="clock-date">Tue&nbsp;7&nbsp;Jul</div>
               </div>
               <div class="weather-block">
-                <svg class="wx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <circle cx="9" cy="9" r="4"/>
-                  <path d="M9 1v2M9 15v2M1 9h2M15 9h2M3.5 3.5l1.4 1.4M13.1 3.5l-1.4 1.4M3.5 14.5l1.4-1.4" stroke-linecap="round"/>
-                  <path d="M11 14.2a4.5 4.5 0 1 1 6.2 4.6 3 3 0 0 1-1.2.2H9.5a3 3 0 0 1-.6-5.9" fill="none"/>
+                <svg class="wx-icon" viewBox="0 0 24 24">
+                  <path d="M9 1v2M9 15v2M1 9h2M15 9h2M3.5 3.5l1.4 1.4M13.1 3.5l-1.4 1.4M3.5 14.5l1.4-1.4"
+                        fill="none" stroke="#171613" stroke-width="1.4" stroke-linecap="round"/>
+                  <circle cx="9" cy="9" r="4" fill="#cf9f2b" stroke="#171613" stroke-width="1.4"/>
+                  <path d="M11 14.2a4.5 4.5 0 1 1 6.2 4.6 3 3 0 0 1-1.2.2H9.5a3 3 0 0 1-.6-5.9z"
+                        fill="#204c80" stroke="#171613" stroke-width="1.4" stroke-linejoin="round"/>
                 </svg>
                 <div class="wx-text">
                   <div class="wx-temp">24°C</div>
@@ -394,10 +402,10 @@
                   -58dBm
                 </div>
                 <div class="stat">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#171613" stroke-width="2">
                     <rect x="2" y="7" width="17" height="10" rx="1.5"/>
                     <rect x="20" y="10" width="2" height="4"/>
-                    <rect x="4.5" y="9.2" width="9" height="5.6" fill="currentColor" stroke="none"/>
+                    <rect x="4.5" y="9.2" width="10.5" height="5.6" fill="#276a3c" stroke="none"/>
                   </svg>
                   86%
                 </div>
@@ -419,7 +427,7 @@
                     <div class="room-name">Living Room</div>
                   </div>
                   <div class="room-metrics">
-                    <div class="metric"><b>21.4°</b><span>Temp</span></div>
+                    <div class="metric"><b class="temp-green">21.4°</b><span>Temp</span></div>
                     <div class="metric"><b>47%</b><span>Humidity</span></div>
                   </div>
                   <div class="pill on"><span class="dot"></span>2 lights on</div>
@@ -436,7 +444,7 @@
                     <div class="room-name">Bedroom</div>
                   </div>
                   <div class="room-metrics">
-                    <div class="metric"><b>19.8°</b><span>Temp</span></div>
+                    <div class="metric"><b class="temp-blue">19.8°</b><span>Temp</span></div>
                     <div class="metric"><b>51%</b><span>Humidity</span></div>
                   </div>
                   <div class="pill off"><span class="dot"></span>Lights off</div>
@@ -452,7 +460,7 @@
                     <div class="room-name">Kitchen</div>
                   </div>
                   <div class="room-metrics">
-                    <div class="metric"><b>22.1°</b><span>Temp</span></div>
+                    <div class="metric"><b class="temp-green">22.1°</b><span>Temp</span></div>
                     <div class="metric"><b>44%</b><span>Humidity</span></div>
                   </div>
                   <div class="pill warn"><span class="dot"></span>Oven 180°</div>
@@ -467,7 +475,7 @@
                     <div class="room-name">Office</div>
                   </div>
                   <div class="room-metrics">
-                    <div class="metric"><b>23.6°</b><span>Temp</span></div>
+                    <div class="metric"><b class="temp-yellow">23.6°</b><span>Temp</span></div>
                     <div class="metric"><b>39%</b><span>Humidity</span></div>
                   </div>
                   <div class="pill on"><span class="dot"></span>Lights on</div>
@@ -481,6 +489,7 @@
                     <div class="light-row"><span>Front Door</span><span class="pill on" style="margin:0;"><span class="dot"></span>Locked</span></div>
                     <div class="light-row"><span>Garage</span><span class="pill off" style="margin:0;"><span class="dot"></span>Closed</span></div>
                     <div class="light-row"><span>Irrigation</span><span class="pill warn" style="margin:0;"><span class="dot"></span>Due 6pm</span></div>
+                    <div class="light-row"><span>Smoke Alarm</span><span class="pill alert" style="margin:0;"><span class="dot"></span>Low Battery</span></div>
                   </div>
                 </div>
               </div>

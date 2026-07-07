@@ -16,6 +16,7 @@
     --pcb-green: #1c4a34;
     --e-black:  #171613;
     --e-white:  #ece7d8;
+    --e-canvas: #d8d2bd;
     --e-red:    #9c1d24;
     --e-yellow: #cf9f2b;
     --e-blue:   #204c80;
@@ -109,12 +110,14 @@
   .panel{
     width:800px;
     height:480px;
-    background: var(--e-white);
+    background: var(--e-canvas);
     color: var(--e-black);
     position:relative;
     overflow:hidden;
     font-family: "Segoe UI", -apple-system, Arial, sans-serif;
     filter: saturate(0.94) contrast(1.02);
+    display:flex;
+    flex-direction:column;
   }
   .panel.flash{ animation: refreshFlash 1.5s steps(1,end) 1; }
   @keyframes refreshFlash{
@@ -126,7 +129,7 @@
     60%  { background: var(--e-blue); }
     72%  { background: var(--e-green); }
     84%  { background:#000; }
-    100% { background: var(--e-white); }
+    100% { background: var(--e-canvas); }
   }
   @media (prefers-reduced-motion: reduce){
     .panel.flash{ animation: none; }
@@ -139,92 +142,108 @@
     background-image: repeating-conic-gradient(#000 0% 25%, transparent 0% 50%);
     background-size: 3px 3px;
     mix-blend-mode: multiply;
+    z-index:5;
   }
 
-  /* ----- top status ribbon ----- */
-  .ribbon{
-    height:72px;
+  /* ----- header ----- */
+  .header{
+    height:84px;
+    flex:none;
+    background: var(--e-black);
+    color: var(--e-white);
     display:flex;
-    align-items:stretch;
-    border-bottom: 3px solid var(--e-black);
+    align-items:center;
+    padding: 0 24px;
+    gap:26px;
+    position:relative;
+    z-index:1;
   }
-  .ribbon > div{ display:flex; align-items:center; }
-  .clock-block{
-    padding: 0 20px;
-    gap:14px;
-    border-right: 2px solid var(--e-black);
-  }
+  .clock-block{ display:flex; flex-direction:column; }
   .clock-time{
-    font-size: 34px;
+    font-size: 38px;
     font-weight: 800;
     letter-spacing: -0.5px;
     font-variant-numeric: tabular-nums;
+    line-height:1;
   }
   .clock-date{
-    display:flex; flex-direction:column;
-    font-size:12px;
-    font-weight:600;
-    color: var(--e-black);
-    opacity:0.72;
-    line-height:1.3;
+    font-size:11px;
+    font-weight:700;
     text-transform:uppercase;
-    letter-spacing:0.5px;
+    letter-spacing:0.6px;
+    opacity:0.6;
+    margin-top:5px;
   }
-  .weather-block{
-    padding:0 22px;
-    gap:12px;
-    border-right: 2px solid var(--e-black);
-    flex:1;
+
+  .weather-block{ display:flex; align-items:center; gap:12px; }
+  .wx-badge{
+    width:44px; height:44px; border-radius:12px;
+    background: var(--e-white);
+    display:flex; align-items:center; justify-content:center;
+    flex:none;
   }
-  .wx-icon{ width:34px; height:34px; flex:none; }
-  .wx-text{ display:flex; flex-direction:column; line-height:1.25; }
-  .wx-temp{ font-size:22px; font-weight:800; font-variant-numeric: tabular-nums; }
-  .wx-cond{ font-size:11.5px; font-weight:600; opacity:0.7; text-transform:uppercase; letter-spacing:0.4px; }
-  .status-block{
-    padding: 0 20px;
-    gap:16px;
-    margin-left:auto;
-  }
+  .wx-icon{ width:26px; height:26px; }
+  .wx-text{ display:flex; flex-direction:column; line-height:1.2; }
+  .wx-temp{ font-size:19px; font-weight:800; font-variant-numeric: tabular-nums; }
+  .wx-cond{ font-size:10.5px; font-weight:600; opacity:0.6; text-transform:uppercase; letter-spacing:0.4px; margin-top:2px; }
+
+  .status-block{ display:flex; gap:22px; margin-left:auto; }
   .stat{
     display:flex; flex-direction:column; align-items:center;
-    gap:2px;
+    gap:4px;
     font-size:10px; font-weight:700;
     text-transform:uppercase; letter-spacing:0.4px;
-    opacity:0.75;
+    opacity:0.7;
   }
-  .stat svg{ width:20px; height:20px; }
+  .stat svg{ width:19px; height:19px; }
 
-  /* ----- main content ----- */
+  /* ----- main canvas ----- */
   .main{
+    flex:1;
     display:flex;
-    height: 332px;
+    gap:16px;
+    padding: 16px;
+    position:relative;
+    z-index:1;
   }
+
+  .card{
+    background: var(--e-white);
+    border: 3px solid var(--e-black);
+    border-radius: 16px;
+    box-shadow: 5px 5px 0 var(--e-black);
+  }
+
   .rooms{
-    flex: 0 0 66.5%;
+    flex: 0 0 65%;
     display:grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
+    gap:14px;
   }
   .room{
-    border-right: 2px solid var(--e-black);
-    border-bottom: 2px solid var(--e-black);
-    padding: 14px 18px;
+    padding: 13px 15px 11px;
     display:flex;
     flex-direction:column;
-    gap:6px;
+    gap:7px;
     position:relative;
+    min-height:0;
   }
-  .rooms .room:nth-child(2n){ border-right: none; }
-  .rooms .room:nth-child(n+3){ border-bottom: none; }
+  .room-head{ display:flex; align-items:center; gap:10px; }
+  .icon-badge{
+    width:32px; height:32px; border-radius:9px;
+    background: var(--e-black);
+    color: var(--e-white);
+    display:flex; align-items:center; justify-content:center;
+    flex:none;
+  }
+  .room-icon{ width:18px; height:18px; }
+  .room-name{ font-size:14.5px; font-weight:800; letter-spacing:0.1px; }
 
-  .room-head{ display:flex; align-items:center; gap:9px; }
-  .room-icon{ width:22px; height:22px; flex:none; }
-  .room-name{ font-size:14.5px; font-weight:800; letter-spacing:0.2px; }
-
-  .room-metrics{ display:flex; gap:16px; margin-top:2px; }
+  .room-metrics{ display:flex; gap:18px; margin-top:1px; }
   .metric{ display:flex; flex-direction:column; }
-  .metric b{ font-size:19px; font-weight:800; font-variant-numeric: tabular-nums; }
-  .metric span{ font-size:10px; font-weight:700; text-transform:uppercase; opacity:0.6; letter-spacing:0.3px; }
+  .metric b{ font-size:22px; font-weight:800; font-variant-numeric: tabular-nums; letter-spacing:-0.3px; }
+  .metric span{ font-size:9px; font-weight:700; text-transform:uppercase; opacity:0.55; letter-spacing:0.3px; margin-top:1px; }
   .metric b.temp-blue{ color: var(--e-blue); }
   .metric b.temp-green{ color: var(--e-green); }
   .metric b.temp-yellow{ color: var(--e-yellow); }
@@ -234,59 +253,66 @@
     margin-top:auto;
     align-self:flex-start;
     display:flex; align-items:center; gap:6px;
-    padding: 4px 10px 4px 7px;
-    border: 2px solid var(--e-black);
+    padding: 5px 11px 5px 8px;
     border-radius: 20px;
-    font-size:11px;
+    font-size:10.5px;
     font-weight:800;
     text-transform:uppercase;
     letter-spacing:0.3px;
   }
-  .dot{ width:8px; height:8px; border-radius:50%; background: var(--e-black); flex:none; }
-  .pill.on{ background: var(--e-green); color: var(--e-white); border-color: var(--e-green); }
+  .dot{ width:7px; height:7px; border-radius:50%; background: var(--e-black); flex:none; }
+  .pill.on{ background: var(--e-green); color: var(--e-white); }
   .pill.on .dot{ background: var(--e-white); }
-  .pill.warn{ background: var(--e-yellow); color: var(--e-black); border-color: var(--e-yellow); }
+  .pill.warn{ background: var(--e-yellow); color: var(--e-black); }
   .pill.warn .dot{ background: var(--e-black); }
-  .pill.alert{ background: var(--e-red); color: var(--e-white); border-color: var(--e-red); }
+  .pill.alert{ background: var(--e-red); color: var(--e-white); }
   .pill.alert .dot{ background: var(--e-white); }
-  .pill.off{ background:transparent; color: var(--e-black); opacity:0.55; }
+  .pill.off{ background: rgba(23,22,19,0.09); color: var(--e-black); opacity:0.7; }
 
   .side{
     flex: 1;
+    padding: 15px 16px;
     display:flex;
     flex-direction:column;
-  }
-  .side-block{
-    padding: 12px 18px;
-    border-bottom: 2px solid var(--e-black);
-  }
-  .side-block:last-child{
-    border-bottom:none; flex:1;
-    display:flex; flex-direction:column; justify-content:center;
+    min-width:0;
   }
   .side-title{
-    font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;
-    opacity:0.65; margin-bottom:16px;
+    font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px;
+    opacity:0.5; margin-bottom:13px;
   }
 
-  .lights-list{ display:flex; flex-direction:column; gap:22px; }
-  .light-row{ display:flex; align-items:center; justify-content:space-between; font-size:15px; font-weight:700; }
-  .light-row .dot{ width:9px;height:9px; }
+  .lights-list{ display:flex; flex-direction:column; gap:12px; flex:1; justify-content:center; }
+  .light-row{ display:flex; align-items:center; gap:11px; }
+  .light-row .icon-badge{ width:27px; height:27px; border-radius:8px; }
+  .light-row .row-icon{ width:14px; height:14px; }
+  .light-row .label{ flex:1; font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .light-row .pill{ flex:none; white-space:nowrap; }
+  .light-row .pill{ margin-top:0; }
 
-  /* ----- footer ribbon ----- */
+  /* ----- footer ----- */
   .footer{
-    height:76px;
-    border-top: 3px solid var(--e-black);
+    height:66px;
+    flex:none;
+    background: var(--e-black);
+    color: var(--e-white);
     display:flex;
     align-items:center;
-    padding: 0 20px;
-    gap: 26px;
+    padding: 0 24px;
+    gap: 24px;
     font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    position:relative;
+    z-index:1;
+  }
+  .status-dot{
+    width:7px; height:7px; border-radius:50%;
+    background: var(--e-green);
+    box-shadow: 0 0 0 3px rgba(39,106,60,0.3);
+    flex:none;
   }
   .footer-item{ display:flex; flex-direction:column; gap:2px; }
-  .footer-item b{ font-size:13px; font-variant-numeric: tabular-nums; }
-  .footer-item span{ font-size:9.5px; text-transform:uppercase; letter-spacing:0.5px; opacity:0.6; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-weight:700; }
-  .footer .sep{ width:2px; align-self:stretch; background: var(--e-black); opacity:0.5; }
+  .footer-item b{ font-size:12.5px; font-variant-numeric: tabular-nums; }
+  .footer-item span{ font-size:8.5px; text-transform:uppercase; letter-spacing:0.5px; opacity:0.55; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-weight:700; }
+  .footer .node{ display:flex; align-items:center; gap:8px; }
   .footer .push{ margin-left:auto; text-align:right; }
 
   /* ---------- caption / nameplate under device ---------- */
@@ -373,24 +399,28 @@
           <div class="panel flash" id="panel">
             <div class="grain"></div>
 
-            <div class="ribbon">
+            <div class="header">
               <div class="clock-block">
                 <div class="clock-time" id="clock">14:32</div>
                 <div class="clock-date">Tue&nbsp;7&nbsp;Jul</div>
               </div>
+
               <div class="weather-block">
-                <svg class="wx-icon" viewBox="0 0 24 24">
-                  <path d="M9 1v2M9 15v2M1 9h2M15 9h2M3.5 3.5l1.4 1.4M13.1 3.5l-1.4 1.4M3.5 14.5l1.4-1.4"
-                        fill="none" stroke="#171613" stroke-width="1.4" stroke-linecap="round"/>
-                  <circle cx="9" cy="9" r="4" fill="#cf9f2b" stroke="#171613" stroke-width="1.4"/>
-                  <path d="M11 14.2a4.5 4.5 0 1 1 6.2 4.6 3 3 0 0 1-1.2.2H9.5a3 3 0 0 1-.6-5.9z"
-                        fill="#204c80" stroke="#171613" stroke-width="1.4" stroke-linejoin="round"/>
-                </svg>
+                <div class="wx-badge">
+                  <svg class="wx-icon" viewBox="0 0 24 24">
+                    <path d="M9 1v2M9 15v2M1 9h2M15 9h2M3.5 3.5l1.4 1.4M13.1 3.5l-1.4 1.4M3.5 14.5l1.4-1.4"
+                          fill="none" stroke="#171613" stroke-width="1.4" stroke-linecap="round"/>
+                    <circle cx="9" cy="9" r="4" fill="#cf9f2b" stroke="#171613" stroke-width="1.4"/>
+                    <path d="M11 14.2a4.5 4.5 0 1 1 6.2 4.6 3 3 0 0 1-1.2.2H9.5a3 3 0 0 1-.6-5.9z"
+                          fill="#204c80" stroke="#171613" stroke-width="1.4" stroke-linejoin="round"/>
+                  </svg>
+                </div>
                 <div class="wx-text">
                   <div class="wx-temp">24°C</div>
                   <div class="wx-cond">Partly Cloudy</div>
                 </div>
               </div>
+
               <div class="status-block">
                 <div class="stat">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -402,10 +432,10 @@
                   -58dBm
                 </div>
                 <div class="stat">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#171613" stroke-width="2">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="7" width="17" height="10" rx="1.5"/>
                     <rect x="20" y="10" width="2" height="4"/>
-                    <rect x="4.5" y="9.2" width="10.5" height="5.6" fill="#276a3c" stroke="none"/>
+                    <rect x="4.5" y="9.2" width="10.5" height="5.6" fill="#4fdc7a" stroke="none"/>
                   </svg>
                   86%
                 </div>
@@ -417,13 +447,15 @@
 
             <div class="main">
               <div class="rooms">
-                <div class="room">
+                <div class="room card">
                   <div class="room-head">
-                    <svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
-                      <path d="M3 12v7a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-7"/>
-                      <path d="M2 12l2-2h16l2 2"/>
-                      <path d="M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>
-                    </svg>
+                    <div class="icon-badge">
+                      <svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+                        <path d="M3 12v7a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-7"/>
+                        <path d="M2 12l2-2h16l2 2"/>
+                        <path d="M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>
+                      </svg>
+                    </div>
                     <div class="room-name">Living Room</div>
                   </div>
                   <div class="room-metrics">
@@ -433,14 +465,16 @@
                   <div class="pill on"><span class="dot"></span>2 lights on</div>
                 </div>
 
-                <div class="room">
+                <div class="room card">
                   <div class="room-head">
-                    <svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
-                      <path d="M2 20v-6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6"/>
-                      <path d="M2 20v1M22 20v1"/>
-                      <path d="M4 12V7a2 2 0 0 1 2-2h3v7"/>
-                      <path d="M9 8h5a2 2 0 0 1 2 2v2"/>
-                    </svg>
+                    <div class="icon-badge">
+                      <svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+                        <path d="M2 20v-6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6"/>
+                        <path d="M2 20v1M22 20v1"/>
+                        <path d="M4 12V7a2 2 0 0 1 2-2h3v7"/>
+                        <path d="M9 8h5a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </div>
                     <div class="room-name">Bedroom</div>
                   </div>
                   <div class="room-metrics">
@@ -450,13 +484,15 @@
                   <div class="pill off"><span class="dot"></span>Lights off</div>
                 </div>
 
-                <div class="room">
+                <div class="room card">
                   <div class="room-head">
-                    <svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
-                      <path d="M4 21V9l8-6 8 6v12"/>
-                      <path d="M9 21v-6h6v6"/>
-                      <circle cx="12" cy="13" r="1.1" fill="currentColor" stroke="none"/>
-                    </svg>
+                    <div class="icon-badge">
+                      <svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+                        <path d="M4 21V9l8-6 8 6v12"/>
+                        <path d="M9 21v-6h6v6"/>
+                        <circle cx="12" cy="13" r="1.1" fill="currentColor" stroke="none"/>
+                      </svg>
+                    </div>
                     <div class="room-name">Kitchen</div>
                   </div>
                   <div class="room-metrics">
@@ -466,12 +502,14 @@
                   <div class="pill warn"><span class="dot"></span>Oven 180°</div>
                 </div>
 
-                <div class="room">
+                <div class="room card">
                   <div class="room-head">
-                    <svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
-                      <rect x="3" y="4" width="18" height="11" rx="1"/>
-                      <path d="M8 20h8M12 15v5"/>
-                    </svg>
+                    <div class="icon-badge">
+                      <svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="11" rx="1"/>
+                        <path d="M8 20h8M12 15v5"/>
+                      </svg>
+                    </div>
                     <div class="room-name">Office</div>
                   </div>
                   <div class="room-metrics">
@@ -482,26 +520,62 @@
                 </div>
               </div>
 
-              <div class="side">
-                <div class="side-block">
-                  <div class="side-title">Quick Status</div>
-                  <div class="lights-list">
-                    <div class="light-row"><span>Front Door</span><span class="pill on" style="margin:0;"><span class="dot"></span>Locked</span></div>
-                    <div class="light-row"><span>Garage</span><span class="pill off" style="margin:0;"><span class="dot"></span>Closed</span></div>
-                    <div class="light-row"><span>Irrigation</span><span class="pill warn" style="margin:0;"><span class="dot"></span>Due 6pm</span></div>
-                    <div class="light-row"><span>Smoke Alarm</span><span class="pill alert" style="margin:0;"><span class="dot"></span>Low Battery</span></div>
+              <div class="side card">
+                <div class="side-title">Quick Status</div>
+                <div class="lights-list">
+                  <div class="light-row">
+                    <div class="icon-badge">
+                      <svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="10" width="16" height="10" rx="2"/>
+                        <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+                      </svg>
+                    </div>
+                    <div class="label">Front Door</div>
+                    <div class="pill on"><span class="dot"></span>Locked</div>
+                  </div>
+                  <div class="light-row">
+                    <div class="icon-badge">
+                      <svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 20V9l9-6 9 6v11"/>
+                        <path d="M6 20v-8h12v8"/>
+                        <path d="M6 12h12"/>
+                      </svg>
+                    </div>
+                    <div class="label">Garage</div>
+                    <div class="pill off"><span class="dot"></span>Closed</div>
+                  </div>
+                  <div class="light-row">
+                    <div class="icon-badge">
+                      <svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>
+                      </svg>
+                    </div>
+                    <div class="label">Irrigation</div>
+                    <div class="pill warn"><span class="dot"></span>Due 6pm</div>
+                  </div>
+                  <div class="light-row">
+                    <div class="icon-badge">
+                      <svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3a5 5 0 0 0-5 5c0 5-2 6-2 8h14c0-2-2-3-2-8a5 5 0 0 0-5-5z"/>
+                        <path d="M10 19a2 2 0 0 0 4 0"/>
+                      </svg>
+                    </div>
+                    <div class="label">Smoke</div>
+                    <div class="pill alert"><span class="dot"></span>Low Batt</div>
                   </div>
                 </div>
               </div>
             </div>
 
             <div class="footer">
-              <div class="footer-item"><b>esp32-eink-01</b><span>Node</span></div>
-              <div class="sep"></div>
+              <div class="node footer-item">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="status-dot"></span><b>esp32-eink-01</b>
+                </div>
+                <span>Node</span>
+              </div>
               <div class="footer-item"><b>192.168.1.42</b><span>IP Address</span></div>
-              <div class="sep"></div>
               <div class="footer-item"><b>3.31V</b><span>Battery</span></div>
-              <div class="sep"></div>
               <div class="footer-item"><b>#00482</b><span>Refresh Count</span></div>
               <div class="footer-item push"><b>Home Assistant 2026.7</b><span>Source</span></div>
             </div>

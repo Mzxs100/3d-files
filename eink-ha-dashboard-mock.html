@@ -254,22 +254,17 @@
     padding: 12px 18px;
     border-bottom: 2px solid var(--e-black);
   }
-  .side-block:last-child{ border-bottom:none; flex:1; }
+  .side-block:last-child{
+    border-bottom:none; flex:1;
+    display:flex; flex-direction:column; justify-content:center;
+  }
   .side-title{
     font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;
-    opacity:0.65; margin-bottom:8px;
+    opacity:0.65; margin-bottom:16px;
   }
 
-  .energy-bar{
-    display:flex; height:16px; border:2px solid var(--e-black); border-radius:3px; overflow:hidden;
-  }
-  .energy-bar span{ height:100%; }
-  .energy-legend{ display:flex; gap:14px; margin-top:9px; flex-wrap:wrap; }
-  .lg{ display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; }
-  .lg i{ width:10px; height:10px; border:1.5px solid var(--e-black); flex:none; display:inline-block; }
-
-  .lights-list{ display:flex; flex-direction:column; gap:9px; }
-  .light-row{ display:flex; align-items:center; justify-content:space-between; font-size:12.5px; font-weight:700; }
+  .lights-list{ display:flex; flex-direction:column; gap:22px; }
+  .light-row{ display:flex; align-items:center; justify-content:space-between; font-size:15px; font-weight:700; }
   .light-row .dot{ width:9px;height:9px; }
 
   /* ----- footer ribbon ----- */
@@ -475,24 +470,11 @@
                     <div class="metric"><b>23.6°</b><span>Temp</span></div>
                     <div class="metric"><b>39%</b><span>Humidity</span></div>
                   </div>
-                  <div class="pill on"><span class="dot"></span>Desk 340W</div>
+                  <div class="pill on"><span class="dot"></span>Lights on</div>
                 </div>
               </div>
 
               <div class="side">
-                <div class="side-block">
-                  <div class="side-title">Energy · Today</div>
-                  <div class="energy-bar">
-                    <span style="width:46%; background:var(--e-green)"></span>
-                    <span style="width:34%; background:var(--e-blue)"></span>
-                    <span style="width:20%; background:var(--e-red)"></span>
-                  </div>
-                  <div class="energy-legend">
-                    <div class="lg"><i style="background:var(--e-green)"></i>Solar 4.1kWh</div>
-                    <div class="lg"><i style="background:var(--e-blue)"></i>Battery 3.0kWh</div>
-                    <div class="lg"><i style="background:var(--e-red)"></i>Grid 1.8kWh</div>
-                  </div>
-                </div>
                 <div class="side-block">
                   <div class="side-title">Quick Status</div>
                   <div class="lights-list">

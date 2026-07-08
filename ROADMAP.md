@@ -37,13 +37,12 @@ Current roster per side: Dozer, Supply Truck, rifle infantry, rocket infantry, t
   - GLA: Terrorist (suicide), **Angry Mob**, Hijacker, Jarmen Kell (hero), Marauder,
     Toxin Tractor, Quad Cannon, Rocket Buggy, Bomb Truck (disguise), **SCUD Launcher**,
     Radar Van, Combat Cycle (M each batch; L overall)
-- [ ] 🔴 **Veterancy** — XP per kill, 3 chevron ranks, heroic self-heal. (S/M)
+- [x] 🔴 **Veterancy** — XP per kill, 3 chevron ranks (+12% dmg/hp each), heroic self-heal. ✅ M1
 - [ ] 🔴 **Transports & garrisons** — infantry garrisoning civilian buildings & bunkers, firing
       ports (Technical/Troop Crawler/Chinook carry), garrison-clearing weapons (flashbang,
       flame, toxin). (L)
-- [ ] 🟡 **Armor/damage-type matrix** — we use one flat damage number + a small anti-building
-      bonus. Real game: damage types (gun, cannon, rocket, flame, sniper, toxin…) vs. armor
-      classes (infantry, light, tank, structure, aircraft) with per-pair multipliers. (M)
+- [x] 🟡 **Armor/damage-type matrix** — gun/cannon/rocket vs. infantry/light/tank/structure
+      multipliers. ✅ M1 (flame/sniper/toxin types & aircraft class arrive with their units)
 - [ ] 🟡 **Special abilities & toggles** — capture building (Ranger/Red Guard/Rebel), sniper
       stealth, deploy-to-fire artillery, weapon toggles, suicide detonation, hero abilities. (L)
 - [ ] 🟡 **Stealth & detection** — stealthed units/structures, detectors (Radar Van, drones). (M)
@@ -59,11 +58,10 @@ Current: Command Center, Reactor, Barracks, Supply Center, War Factory, Patriot.
 - [ ] 🔴 **Airfield** (build/rearm aircraft, 4 pads). (M — depends on aircraft)
 - [ ] 🔴 **Superweapons** — Particle Uplink Cannon (steerable beam), Nuclear Missile, SCUD Storm,
       with global countdown timers visible to both players. (M/L)
-- [ ] 🔴 **Tech-tree gating** — real prerequisites (e.g. War Factory needs Supply Center; advanced
-      units need Strategy Center / Propaganda Center / Palace; rank-gated units). Ours only gates
-      by which building produces what. (S/M)
-- [ ] 🔴 **Sell & repair buildings** — sell for ~50%, paid structure repair button (dozers repair
-      free right now; real game charges). (S)
+- [x] 🔴 **Tech-tree gating** — War Factory requires Supply Center, Patriot requires Barracks,
+      locked buttons show the prerequisite. ✅ M1 (deeper tiers arrive with new buildings)
+- [x] 🔴 **Sell & repair buildings** — sell for 50% from the command bar; dozer/truck repair
+      already in. ✅ M1
 - [ ] 🟡 **Faction-specific defenses & tech buildings** — Strategy Center (battle plans), Supply
       Drop Zone, Detention Camp; Gattling Cannon, Bunker, Speaker Tower, Internet Center,
       Propaganda Center; Stinger Site (crewed), **Tunnel Network** (instant unit teleport between
@@ -124,9 +122,10 @@ Entirely missing as a system (research-at-building, one-time purchases):
 
 ## 9. Skirmish AI
 
-- [ ] 🔴 **Difficulty levels** (Easy → Brutal) tuning income, aggression, micro. (S/M)
-- [ ] 🔴 **AI base building** — our AI never *constructs* anything; it should place new
-      structures, rebuild losses, expand to fresh supply piles, add defenses under pressure. (M/L)
+- [x] 🔴 **Difficulty levels** — Easy/Normal/Hard picker on deploy screen tuning AI income,
+      grace period, wave cadence/size, and rebuild behavior. ✅ M1
+- [x] 🔴 **AI base building (phase 1)** — AI rebuilds destroyed structures/defenses from its base
+      blueprint while its CC stands (Normal+). ✅ M1 — expansion to new supplies still TODO. (M)
 - [ ] 🟡 AI uses generals powers, superweapons, upgrades; varies attack composition and attack
       routes (flanks); defends its harvesters; retreats damaged groups. (M/L)
 - [ ] 🟢 Per-faction AI personalities. (M)
@@ -142,11 +141,12 @@ Entirely missing as a system (research-at-building, one-time purchases):
 
 ## 11. UI/UX
 
-- [ ] 🔴 **Control groups** (assign/recall squads — critical for RTS feel; long-press number
-      row on mobile). (S/M)
+- [x] 🔴 **Control groups** — 3 slots, left-edge buttons: tap recall, long-press assign, re-tap
+      jumps camera; keys 1-3 / Shift+1-3 on desktop. ✅ M1
 - [ ] 🔴 Better command bar: unit portraits w/ health, multi-type selection tabs, per-item queue
       cancel (we only refund the last), ability buttons with cooldown sweeps. (M)
-- [ ] 🟡 Alerts — "base under attack" minimap pings, idle-worker button, low-power warning. (S)
+- [x] 🟡 Alerts — "base under attack" toast + flashing minimap pings (throttled). ✅ M1
+      (idle-worker button still TODO)
 - [ ] 🟡 Attack-target cursors/markers, rally-point flags, veterancy chevrons on health bars. (S)
 - [ ] 🟢 Desktop hotkeys, edge-scroll, camera bookmarks; gamepad? (S/M)
 
@@ -173,7 +173,7 @@ Entirely missing as a system (research-at-building, one-time purchases):
 
 ## Suggested milestone order
 
-1. **M1 — "Feels like Generals"**: armor/damage matrix, veterancy, sell/repair, control groups,
+1. ~~**M1 — "Feels like Generals"**~~ ✅ **DONE**: armor/damage matrix, veterancy, sell/repair, control groups,
    tech-tree gating, base-under-attack alerts, AI difficulty + AI base building. *(mostly S/M items)*
 2. **M2 — China + real asymmetry**: data-driven stats, China roster/buildings, GLA no-power +
    workers + tunnels, faction gatherers.

@@ -27,6 +27,16 @@
     min-width:44px; height:40px; font-size:17px; font-weight:700; padding:0 10px; position:relative; overflow:hidden; }
   .tbtn:active { background:#3a4a24; }
   .tbtn.armed { background:#7a2a1a; border-color:#ff8866; }
+  #groups { position:fixed; left:6px; bottom:calc(env(safe-area-inset-bottom,0px) + 148px); z-index:11;
+    display:flex; flex-direction:column; gap:6px; }
+  .gbtn { width:42px; height:42px; border-radius:9px; border:1px solid #5a6a3a;
+    background:rgba(24,32,14,.92); color:#e8e6d8; font-weight:700; font-size:15px; position:relative; }
+  .gbtn:active { background:#3a4a24; }
+  .gbtn .cnt { position:absolute; top:1px; right:4px; font-size:9px; color:#ffd75e; }
+  #diffRow { display:flex; gap:8px; margin-top:4px; }
+  .diff { flex:1; padding:10px 4px !important; border-radius:8px; border:1px solid #6a7a44;
+    background:#1c260e !important; color:#cdd6b8 !important; font-weight:700; width:auto !important; }
+  .diff.on { background:#ffd75e !important; color:#1a2208 !important; }
   #spacer { flex:1; }
   #bottombar { bottom:0; left:0; right:0; display:flex; gap:8px; align-items:flex-end;
     padding:8px 8px calc(env(safe-area-inset-bottom,0px) + 8px) 138px;
@@ -77,6 +87,11 @@
 
 <div id="bottombar" class="hud"></div>
 <canvas id="minimap" width="126" height="126"></canvas>
+<div id="groups" class="hud">
+  <button class="gbtn" data-g="1">1<span class="cnt"></span></button>
+  <button class="gbtn" data-g="2">2<span class="cnt"></span></button>
+  <button class="gbtn" data-g="3">3<span class="cnt"></span></button>
+</div>
 <div id="toast"></div>
 
 <div id="overlay">
@@ -91,10 +106,17 @@
       <li>Select the <b>Dozer</b> to construct buildings. Build a <b>Supply Center</b> — its <b>Chinook truck</b> gathers supply crates for cash.</li>
       <li>Trucks <b>loop gathering automatically</b>. Trucks &amp; dozers <b>repair</b>: tap a damaged building, or they fix nearby structures when idle. Dozers resume unfinished construction.</li>
       <li><b>⟳</b> (or the R key) restarts the match.</li>
+      <li><b>1·2·3</b> control groups: tap = select, <b>long-press = assign</b>, tap again = jump to them. Units earn <b>veterancy</b> chevrons from kills.</li>
+      <li>Weapons matter: <b>guns</b> shred infantry, <b>rockets</b> crack armor &amp; buildings, <b>cannons</b> are all-round.</li>
       <li>Keep <b>⚡ power</b> positive or production slows and defenses go offline.</li>
       <li><b>Fog of war</b> hides the enemy — send a scout to reveal the map. Explored ground stays on your minimap.</li>
     </ul>
     <p><b>Mission:</b> the GLA holds the north-east. Destroy every enemy structure. They will send raids — dig in fast, General.</p>
+    <div id="diffRow">
+      <button class="diff" data-d="easy">EASY</button>
+      <button class="diff on" data-d="normal">NORMAL</button>
+      <button class="diff" data-d="hard">HARD</button>
+    </div>
     <button id="btnStart">DEPLOY</button>
   </div>
 </div>
@@ -310,23 +332,55 @@ defAsset('crater', 48, 48, `
 
 /* ============================== DATA ============================== */
 const UNITS = {
-  dozer:  { name:'Dozer',        cost:1000, hp:250, speed:62,  r:15, sight:200, svg:'dozer',  size:40, builder:true,  bt:8 },
-  truck:  { name:'Supply Truck', cost:600,  hp:320, speed:88,  r:15, sight:180, svg:'truck',  size:42, harvester:true,bt:6 },
-  inf:    { name:'Ranger',       cost:225,  hp:120, speed:56,  r:8,  sight:230, svg:'inf',    size:24, dmg:9,  range:150, rof:0.45, proj:'bullet', bt:4 },
-  rocket: { name:'Missile Def.', cost:300,  hp:100, speed:50,  r:8,  sight:250, svg:'rocket', size:24, dmg:38, range:195, rof:1.9,  proj:'rocket', bt:5, antiB:1.6 },
-  tank:   { name:'Crusader',     cost:900,  hp:420, speed:66,  r:17, sight:240, svg:'tank',   size:46, dmg:55, range:180, rof:1.7,  proj:'shell',  bt:9, splash:26 },
-  car:    { name:'Humvee',       cost:700,  hp:250, speed:118, r:15, sight:250, svg:'car',    size:42, dmg:9,  range:160, rof:0.22, proj:'bullet', bt:7 }
+  dozer:  { name:'Dozer',        cost:1000, hp:250, speed:62,  r:15, sight:200, svg:'dozer',  size:40, arm:'light', builder:true,  bt:8 },
+  truck:  { name:'Supply Truck', cost:600,  hp:320, speed:88,  r:15, sight:180, svg:'truck',  size:42, arm:'light', harvester:true,bt:6 },
+  inf:    { name:'Ranger',       cost:225,  hp:120, speed:56,  r:8,  sight:230, svg:'inf',    size:24, arm:'inf',   dmg:10, range:150, rof:0.45, proj:'bullet', bt:4 },
+  rocket: { name:'Missile Def.', cost:300,  hp:100, speed:50,  r:8,  sight:250, svg:'rocket', size:24, arm:'inf',   dmg:38, range:195, rof:1.9,  proj:'rocket', bt:5 },
+  tank:   { name:'Crusader',     cost:900,  hp:420, speed:66,  r:17, sight:240, svg:'tank',   size:46, arm:'tank',  dmg:55, range:180, rof:1.7,  proj:'shell',  bt:9, splash:26 },
+  car:    { name:'Humvee',       cost:700,  hp:250, speed:118, r:15, sight:250, svg:'car',    size:42, arm:'light', dmg:10, range:160, rof:0.22, proj:'bullet', bt:7 }
 };
+/* damage-type vs armor-class multipliers: guns shred infantry but barely dent
+   armor/structures; rockets crack tanks & buildings; cannons are all-round */
+const DMG_MATRIX = {
+  bullet: { inf: 1.25, light: 0.9, tank: 0.55, bld: 0.35 },
+  shell:  { inf: 0.7,  light: 1.1, tank: 1.0,  bld: 1.0 },
+  rocket: { inf: 0.8,  light: 1.1, tank: 1.25, bld: 1.5 }
+};
+function dmgMult(kind, tgt) {
+  const m = DMG_MATRIX[kind];
+  return m ? (m[tgt.kind === 'bld' ? 'bld' : tgt.d.arm] || 1) : 1;
+}
+/* veterancy: xp = cost of victims; ranks give +12% dmg & hp each, heroic regens */
+const RANK_XP = [1.6, 3.2, 6.5];
+function promote(u) {
+  while (u.rank < 3 && u.xp >= u.d.cost * RANK_XP[u.rank]) {
+    u.rank++;
+    const frac = u.hp / u.maxhp;
+    u.maxhp = Math.round(u.d.hp * (1 + 0.12 * u.rank));
+    u.hp = Math.min(u.maxhp, u.maxhp * frac + u.d.hp * 0.25);
+    u.dmgMul = 1 + 0.12 * u.rank;
+    state.parts.push({ x: u.x, y: u.y - 26, vx: 0, vy: -20, life: 1.1, max: 1.1, sz: 13, c: 'text', txt: '★ ' + ['', 'VETERAN', 'ELITE', 'HEROIC'][u.rank] });
+    if (u.team === 'usa') beep(1200, 0.12, 'sine', 0.06, 300);
+  }
+}
 const GLA_NAMES = { dozer:'Worker', truck:'Supply Truck', inf:'Rebel', rocket:'RPG Trooper', tank:'Scorpion', car:'Technical' };
 const BUILDINGS = {
   cc:     { name:'Command Center', cost:2000, hp:2200, w:118, h:118, svg:'cc',     power:2,  produce:['dozer'],        bt:20 },
   power:  { name:'Reactor',        cost:800,  hp:600,  w:86,  h:86,  svg:'power',  power:-8, bt:9 },
   rax:    { name:'Barracks',       cost:500,  hp:850,  w:88,  h:88,  svg:'rax',    power:1,  produce:['inf','rocket'], bt:9 },
   sup:    { name:'Supply Center',  cost:1400, hp:1000, w:102, h:88,  svg:'sup',    power:1,  produce:['truck'], depot:true, bt:11 },
-  fact:   { name:'War Factory',    cost:2000, hp:1300, w:116, h:100, svg:'fact',   power:1,  produce:['tank','car'],   bt:14 },
-  turret: { name:'Patriot',        cost:1000, hp:550,  w:64,  h:64,  svg:'turret', power:2,  dmg:42, range:250, rof:1.3, proj:'rocket', bt:9 }
+  fact:   { name:'War Factory',    cost:2000, hp:1300, w:116, h:100, svg:'fact',   power:1,  produce:['tank','car'],   bt:14, req:'sup' },
+  turret: { name:'Patriot',        cost:1000, hp:550,  w:64,  h:64,  svg:'turret', power:2,  dmg:42, range:250, rof:1.3, proj:'rocket', bt:9, req:'rax' }
 };
 const BUILD_MENU = ['power', 'rax', 'sup', 'fact', 'turret', 'cc'];
+/* skirmish difficulty presets (enemy economy & wave pacing) */
+const DIFFS = {
+  easy:   { start: 600,  inc0: 6,  ramp: 70, cap: 14, grace: 80, first: 210, period: 95, waveCap: 5,  rebuild: false },
+  normal: { start: 1000, inc0: 10, ramp: 45, cap: 22, grace: 45, first: 150, period: 70, waveCap: 8,  rebuild: true },
+  hard:   { start: 2200, inc0: 16, ramp: 30, cap: 34, grace: 25, first: 105, period: 55, waveCap: 10, rebuild: true }
+};
+let difficulty = 'normal';
+const groups = { 1: [], 2: [], 3: [] };
 
 /* ============================== WORLD ============================== */
 const WORLD = 2400;
@@ -334,6 +388,7 @@ const state = {
   money: 5000, t: 0, over: false,
   units: [], buildings: [], piles: [], projs: [], parts: [], decos: [],
   sel: [], selB: null,
+  alerts: [], alertT: -99,
   cam: { x: 300, y: WORLD - 300, z: 0.6 },
   mode: null,       // null | 'place' | 'atkmove' | 'box'
   ghost: null,      // {type,x,y}
@@ -346,6 +401,7 @@ function makeUnit(team, type, x, y) {
   const u = { id: ID++, kind:'unit', team, type, x, y, a: team === 'usa' ? -Math.PI/4 : Math.PI*0.75,
     hp: d.hp, maxhp: d.hp, cd: 0, order: null, tgt: null, load: 0, hState: 0, hTimer: 0, pileId: 0,
     px: x, py: y, stuckT: 0, idleT: 0, guard: false, detour: null, avoid: 0,
+    xp: 0, rank: 0, dmgMul: 1,
     d };
   state.units.push(u);
   return u;
@@ -389,6 +445,9 @@ function genMap() {
   makeUnit('gla', 'inf', ex - 200, ey + 300).guard = true;
   makeUnit('gla', 'inf', ex - 300, ey + 200).guard = true;
   makeUnit('gla', 'tank', ex - 160, ey + 380).guard = true;
+  /* blueprint of the enemy base, used for AI rebuilding */
+  state.ai.plan = state.buildings.filter(b => b.team === 'gla' && b.type !== 'cc')
+    .map(b => ({ type: b.type, x: b.x, y: b.y }));
 }
 
 /* ============================== FOG OF WAR ============================== */
@@ -529,11 +588,26 @@ function spawnExplosion(x, y, sz) {
   }
   state.parts.push({ x, y, vx: 0, vy: 0, life: 0.35, max: 0.35, sz, c: 'flash' });
 }
-function damage(e, dmg, splash) {
+function damage(e, dmg, src) {
   if (e.hp <= 0) return;
   e.hp -= dmg;
+  /* base-under-attack alert for structures & supply line hit off-screen */
+  if (e.team === 'usa' && (e.kind === 'bld' || e.d.harvester || e.d.builder) && state.t - state.alertT > 10) {
+    state.alertT = state.t;
+    state.alerts.push({ x: e.x, y: e.y, t: 4 });
+    const [sx, sy] = worldToScreen(e.x, e.y);
+    if (sx < -40 || sx > VW + 40 || sy < -40 || sy > VH + 40) {
+      toast(e.kind === 'bld' ? '⚠ Base under attack!' : '⚠ Our workers are under attack!');
+      beep(150, 0.5, 'sawtooth', 0.08, 60);
+    }
+  }
   if (e.hp <= 0) {
     e.hp = 0;
+    /* veterancy credit to the killer */
+    if (src && src.kind === 'unit' && src.team !== e.team && src.d.dmg && state.units.includes(src)) {
+      src.xp += e.d.cost || 500;
+      promote(src);
+    }
     spawnExplosion(e.x, e.y, e.kind === 'bld' ? Math.max(e.w, e.h) * 0.7 : e.d.r * 2.5);
     boom(e.kind === 'bld' ? 0.3 : 0.15, e.kind === 'bld' ? 0.7 : 0.35);
     if (e.kind === 'bld') {
@@ -652,7 +726,7 @@ function fireAt(sh, tgt, d) {
   const kind = d.proj;
   const muzzle = (sh.d && sh.d.r) ? sh.d.r : 20;
   state.projs.push({ x: sh.x + Math.cos(sh.a) * muzzle, y: sh.y + Math.sin(sh.a) * muzzle,
-    tgt, team: sh.team, dmg: d.dmg, splash: d.splash || 0, kind, antiB: d.antiB || 1,
+    tgt, team: sh.team, dmg: d.dmg * (sh.dmgMul || 1), splash: d.splash || 0, kind, src: sh,
     speed: kind === 'bullet' ? 900 : kind === 'rocket' ? 420 : 560,
     lx: tgt.x, ly: tgt.y, life: 2.4 });
   if (kind === 'bullet') beep(rnd(900, 1300), 0.05, 'square', 0.03, -500);
@@ -662,6 +736,7 @@ function fireAt(sh, tgt, d) {
 }
 function updateUnit(u, dt) {
   if (u.cd > 0) u.cd -= dt;
+  if (u.rank >= 3 && u.hp < u.maxhp) u.hp = Math.min(u.maxhp, u.hp + 4 * dt); /* heroic self-heal */
   const o = u.order;
   /* combat target handling */
   if (u.tgt && u.tgt.hp <= 0) { u.tgt = null; if (o && o.t === 'attack') u.order = o.res || null; }
@@ -838,7 +913,15 @@ function separate(dt) {
 
 /* ============================== BUILDINGS UPDATE ============================== */
 function updateBuilding(b, dt, pow) {
-  if (!b.built) return;
+  if (!b.built) {
+    if (b.auto) { /* AI rebuilds without a worker unit, slower than a dozer */
+      const r = dt / (b.d.bt * 1.6);
+      b.prog = Math.min(1, b.prog + r);
+      b.hp = Math.min(b.maxhp, b.hp + b.maxhp * r);
+      if (b.prog >= 1) b.built = true;
+    }
+    return;
+  }
   /* production */
   if (b.queue.length) {
     const speed = (b.team === 'gla' || pow.ok) ? 1 : 0.45;
@@ -877,11 +960,10 @@ function updateProjs(dt) {
       /* impact */
       if (p.splash) {
         spawnExplosion(p.lx, p.ly, 26); boom(0.1, 0.25);
-        for (const u of state.units) if (u.team !== p.team && dist(u.x, u.y, p.lx, p.ly) < p.splash + u.d.r) damage(u, p.dmg);
-        for (const b of state.buildings) if (b.team !== p.team && dist(b.x, b.y, p.lx, p.ly) < p.splash + Math.max(b.w, b.h)/2) damage(b, p.dmg);
+        for (const u of state.units) if (u.team !== p.team && dist(u.x, u.y, p.lx, p.ly) < p.splash + u.d.r) damage(u, p.dmg * dmgMult(p.kind, u), p.src);
+        for (const b of state.buildings) if (b.team !== p.team && dist(b.x, b.y, p.lx, p.ly) < p.splash + Math.max(b.w, b.h)/2) damage(b, p.dmg * dmgMult(p.kind, b), p.src);
       } else if (p.tgt && p.tgt.hp > 0) {
-        const mult = p.tgt.kind === 'bld' ? p.antiB : 1;
-        damage(p.tgt, p.dmg * mult);
+        damage(p.tgt, p.dmg * dmgMult(p.kind, p.tgt), p.src);
         if (p.kind === 'rocket') { spawnExplosion(p.lx, p.ly, 18); }
         else state.parts.push({ x: p.lx, y: p.ly, vx: 0, vy: 0, life: 0.12, max: 0.12, sz: 6, c: '#ffd75e' });
       }
@@ -902,14 +984,25 @@ function updateProjs(dt) {
    modest trickle) and built through the AI's own Barracks/Factory queues at normal
    build speed — no instant spawns. Finished units stage at the base, then attack. */
 function aiUpdate(dt) {
-  const ai = state.ai;
-  ai.money += dt * (10 + Math.min(22, state.t / 45));
+  const ai = state.ai, D = DIFFS[difficulty];
+  ai.money += dt * (D.inc0 + Math.min(D.cap, state.t / D.ramp));
   ai.next -= dt;
   ai.think -= dt;
   if (ai.think > 0) return;
   ai.think = 2;
   const alive = t => state.buildings.find(b => b.team === 'gla' && b.type === t && b.built);
   const rax = alive('rax'), fact = alive('fact'), sup = alive('sup');
+  /* rebuild destroyed structures from the base blueprint while the CC stands */
+  if (D.rebuild && alive('cc') && !state.buildings.some(b => b.team === 'gla' && !b.built)) {
+    for (const p of ai.plan) {
+      if (state.buildings.some(b => b.team === 'gla' && b.type === p.type && dist(b.x, b.y, p.x, p.y) < 60)) continue;
+      if (ai.money < BUILDINGS[p.type].cost) break;
+      if (state.units.some(u => dist(u.x, u.y, p.x, p.y) < 90)) continue; /* site contested */
+      ai.money -= BUILDINGS[p.type].cost;
+      makeBuilding('gla', p.type, p.x, p.y, false).auto = true;
+      break;
+    }
+  }
   /* keep a small harvesting fleet running */
   if (sup) {
     const trucks = state.units.filter(u => u.team === 'gla' && u.d.harvester).length + sup.queue.length;
@@ -917,11 +1010,11 @@ function aiUpdate(dt) {
   }
   /* idle combat units at the base stage up into the next wave */
   const staged = state.units.filter(u => u.team === 'gla' && u.d.dmg && !u.order && !u.tgt && !u.guard);
-  const waveSize = Math.min(2 + ai.wave, 8);
+  const waveSize = Math.min(2 + ai.wave, D.waveCap);
   /* feed production queues — after an early-game grace period, and never
      stockpiling (staged + already queued) beyond the next wave's size */
   const queued = (fact ? fact.queue.length : 0) + (rax ? rax.queue.length : 0);
-  if (state.t > 45 && staged.length + queued < waveSize + 1) {
+  if (state.t > D.grace && staged.length + queued < waveSize + 1) {
     for (const b of [fact, rax]) {
       if (!b || b.queue.length >= 2) continue;
       const opts = b === fact ? ['tank', 'tank', 'car'] : ['inf', 'inf', 'rocket'];
@@ -939,7 +1032,7 @@ function aiUpdate(dt) {
   }
   /* waves launch on the timer with whatever has staged — never "as soon as possible" */
   if (ai.next <= 0 && staged.length >= 2) {
-    ai.wave++; ai.next = 70;
+    ai.wave++; ai.next = D.period;
     const tgts = state.buildings.filter(b => b.team === 'usa');
     let tx = 300, ty = WORLD - 300;
     if (tgts.length) { const t = tgts[(Math.random() * tgts.length) | 0]; tx = t.x; ty = t.y; }
@@ -1066,6 +1159,14 @@ function render() {
     ctx.restore();
     if (u.load) { ctx.fillStyle = '#ffd75e'; ctx.beginPath(); ctx.arc(u.x, u.y - u.d.r - 7, 4, 0, TAU); ctx.fill(); }
     drawHealthBar(u.x, u.y - u.d.r - 14, Math.max(26, u.d.r * 2.4), u.hp / u.maxhp, state.sel.includes(u));
+    if (u.rank) { /* veterancy chevrons */
+      const by = u.y - u.d.r - 20;
+      ctx.strokeStyle = '#ffd75e'; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+      for (let i = 0; i < u.rank; i++) {
+        const cx = u.x + (i - (u.rank - 1) / 2) * 8;
+        ctx.beginPath(); ctx.moveTo(cx - 3, by); ctx.lineTo(cx, by - 3.5); ctx.lineTo(cx + 3, by); ctx.stroke();
+      }
+    }
   }
   /* projectiles */
   for (const p of state.projs) {
@@ -1145,6 +1246,13 @@ function renderMinimap() {
     mmCtx.fillRect(u.x * s - 1.5, u.y * s - 1.5, 3, 3);
   }
   mmCtx.drawImage(FOW.cv, 0, 0, 126, 126);
+  /* attack alert pings */
+  for (const a of state.alerts) {
+    if (((a.t * 5) | 0) % 2) {
+      mmCtx.strokeStyle = '#ff4433'; mmCtx.lineWidth = 2;
+      mmCtx.beginPath(); mmCtx.arc(a.x * s, a.y * s, 6 + (4 - a.t) * 2, 0, TAU); mmCtx.stroke();
+    }
+  }
   const c = state.cam;
   mmCtx.strokeStyle = 'rgba(255,255,255,.8)'; mmCtx.lineWidth = 1;
   mmCtx.strokeRect((c.x - VW/2/c.z) * s, (c.y - VH/2/c.z) * s, VW/c.z * s, VH/c.z * s);
@@ -1371,7 +1479,9 @@ function rebuildBar() {
   if (dozerSel) {
     for (const bt of BUILD_MENU) {
       const d = BUILDINGS[bt];
-      mkBtn(`${iconFor('usa', d.svg)}<span>${d.name}</span><span class="cost">$${d.cost}</span>`, '', () => {
+      const locked = d.req && !state.buildings.some(b => b.team === 'usa' && b.built && b.type === d.req);
+      mkBtn(`${iconFor('usa', d.svg)}<span>${d.name}</span><span class="cost">${locked ? '🔒' : '$' + d.cost}</span>`, locked ? 'disabled' : '', () => {
+        if (locked) { toast('Requires ' + BUILDINGS[d.req].name); return; }
         if (state.money < d.cost) { toast('Insufficient funds — gather supplies'); return; }
         const [wx, wy] = screenToWorld(VW / 2, VH / 2 - 60);
         state.ghost = { type: bt, x: Math.round(wx/10)*10, y: Math.round(wy/10)*10 };
@@ -1422,11 +1532,15 @@ function rebuildBar() {
       });
     }
   }
-  if (b && b.built && !b.d.produce && b.type !== 'turret') {
-    const el = document.createElement('div');
-    el.style.cssText = 'color:#9ab070;font-size:12px;align-self:center;padding:6px';
-    el.textContent = b.d.name + (b.type === 'power' ? ' — powering the base' : '');
-    bar.appendChild(el);
+  if (b && b.built) {
+    mkBtn(`<div style="font-size:22px">🏚</div><span>SELL</span><span class="cost">+$${b.d.cost >> 1}</span>`, '', () => {
+      state.money += b.d.cost >> 1;
+      spawnExplosion(b.x, b.y, 34);
+      beep(480, 0.16, 'triangle', 0.06, -220);
+      state.buildings = state.buildings.filter(x => x !== b);
+      state.selB = null;
+      rebuildBar(); checkEnd();
+    });
   }
 }
 
@@ -1445,6 +1559,56 @@ document.getElementById('btnArmy').addEventListener('click', () => {
   else toast('No combat units — build a Barracks');
   rebuildBar();
 });
+/* control groups: tap = select (tap again = jump camera), long-press = assign */
+function assignGroup(g) {
+  audioInit();
+  if (!state.sel.length) { toast('Select units first, then long-press to assign'); return; }
+  groups[g] = [...state.sel];
+  toast('Control group ' + g + ' assigned (' + state.sel.length + ')');
+  beep(900, 0.08, 'sine', 0.05, 200);
+  updGroupBtns();
+}
+function recallGroup(g) {
+  audioInit();
+  groups[g] = groups[g].filter(u => state.units.includes(u));
+  if (!groups[g].length) { toast('Group ' + g + ' is empty — long-press to assign'); return; }
+  const again = state.sel.length === groups[g].length && state.sel.every(u => groups[g].includes(u));
+  state.sel = [...groups[g]]; state.selB = null; rebuildBar();
+  if (again) { /* second tap: jump camera to the group */
+    let cx = 0, cy = 0;
+    for (const u of groups[g]) { cx += u.x; cy += u.y; }
+    state.cam.x = cx / groups[g].length; state.cam.y = cy / groups[g].length; clampCam();
+  }
+  beep(760, 0.06, 'sine', 0.05);
+}
+function updGroupBtns() {
+  for (const btn of document.querySelectorAll('.gbtn')) {
+    const n = groups[btn.dataset.g].filter(u => state.units.includes(u)).length;
+    btn.querySelector('.cnt').textContent = n || '';
+  }
+}
+for (const btn of document.querySelectorAll('.gbtn')) {
+  let hold = null;
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    hold = setTimeout(() => { hold = null; assignGroup(btn.dataset.g); }, 480);
+  });
+  btn.addEventListener('pointerup', () => { if (hold) { clearTimeout(hold); hold = null; recallGroup(btn.dataset.g); } });
+  btn.addEventListener('pointercancel', () => { if (hold) { clearTimeout(hold); hold = null; } });
+}
+window.addEventListener('keydown', e => {
+  if (!started) return;
+  if (e.key === '1' || e.key === '2' || e.key === '3') {
+    if (e.shiftKey) assignGroup(e.key); else recallGroup(e.key);
+  }
+});
+/* difficulty picker on the deploy screen */
+document.querySelectorAll('.diff').forEach(b => b.addEventListener('click', () => {
+  difficulty = b.dataset.d;
+  document.querySelectorAll('.diff').forEach(x => x.classList.toggle('on', x === b));
+  if (state.ai) { state.ai.money = DIFFS[difficulty].start; state.ai.next = DIFFS[difficulty].first; }
+}));
+
 const btnBox = document.getElementById('btnBox');
 btnBox.addEventListener('click', () => { audioInit(); boxMode = !boxMode; updToggle(); if (boxMode) toast('Drag a box to select units'); });
 function updToggle() { btnBox.className = 'tbtn' + (boxMode ? ' armed' : ''); }
@@ -1472,6 +1636,8 @@ function frame(now) {
     for (const p of state.parts) { p.life -= dt; p.x += (p.vx || 0) * dt; p.y += (p.vy || 0) * dt; }
     state.parts = state.parts.filter(p => p.life > 0);
     if (state.parts.length > 400) state.parts.splice(0, state.parts.length - 400);
+    for (const a of state.alerts) a.t -= dt;
+    state.alerts = state.alerts.filter(a => a.t > 0);
     hudT -= dt;
     if (hudT <= 0) { hudT = 0.25; updHud(); }
   }
@@ -1492,7 +1658,9 @@ function resetGame() {
   state.projs.length = 0; state.parts.length = 0; state.decos.length = 0;
   state.sel = []; state.selB = null;
   state.mode = null; state.ghost = null;
-  state.ai = { money: 1000, wave: 0, next: 150, think: 3 };
+  state.ai = { money: DIFFS[difficulty].start, wave: 0, next: DIFFS[difficulty].first, think: 3 };
+  state.alerts = []; state.alertT = -99;
+  groups[1] = []; groups[2] = []; groups[3] = [];
   ID = 1;
   boxMode = false; boxRect = null; panStart = null; pinch = null; updToggle();
   genMap();
@@ -1503,7 +1671,7 @@ function resetGame() {
   state.cam.z = clamp(Math.min(VW, VH) / 520, 0.55, 1.0);
   state.cam.x = 340; state.cam.y = WORLD - 340;
   clampCam();
-  rebuildBar(); updHud();
+  rebuildBar(); updHud(); updGroupBtns();
 }
 window.restartMatch = () => {
   resetGame();

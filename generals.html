@@ -26,9 +26,6 @@
   .tbtn { background:rgba(30,38,20,.9); border:1px solid #5a6a3a; color:#e8e6d8; border-radius:8px;
     min-width:44px; height:40px; font-size:17px; font-weight:700; padding:0 10px; position:relative; overflow:hidden; }
   .tbtn:active { background:#3a4a24; }
-  .tbtn.charging { color:#889; }
-  .tbtn .fill { position:absolute; left:0; top:0; bottom:0; background:rgba(120,200,80,.25); width:0%; }
-  .tbtn.ready { border-color:#ffd75e; color:#ffd75e; box-shadow:0 0 10px rgba(255,215,94,.5); }
   .tbtn.armed { background:#7a2a1a; border-color:#ff8866; }
   #spacer { flex:1; }
   #bottombar { bottom:0; left:0; right:0; display:flex; gap:8px; align-items:flex-end;
@@ -72,7 +69,6 @@
   <span class="stat" id="money">$0</span>
   <span class="stat" id="power">⚡0/0</span>
   <span id="spacer"></span>
-  <button class="tbtn charging" id="btnStrike" title="A-10 Strike"><span class="fill"></span><span style="position:relative">✈️</span></button>
   <button class="tbtn" id="btnArmy" title="Select army">⚔</button>
   <button class="tbtn" id="btnBox" title="Box select">⬚</button>
   <button class="tbtn" id="btnRestart" title="Restart match">⟳</button>
@@ -96,7 +92,6 @@
       <li>Trucks <b>loop gathering automatically</b>. Trucks &amp; dozers <b>repair</b>: tap a damaged building, or they fix nearby structures when idle. Dozers resume unfinished construction.</li>
       <li><b>⟳</b> (or the R key) restarts the match.</li>
       <li>Keep <b>⚡ power</b> positive or production slows and defenses go offline.</li>
-      <li><b>✈️ A-10 Strike</b> charges over time — devastating on enemy structures.</li>
     </ul>
     <p><b>Mission:</b> the GLA holds the north-east. Destroy every enemy structure. They will send raids — dig in fast, General.</p>
     <button id="btnStart">DEPLOY</button>
@@ -338,11 +333,10 @@ const state = {
   money: 5000, t: 0, over: false,
   units: [], buildings: [], piles: [], projs: [], parts: [], decos: [],
   sel: [], selB: null,
-  strikeCd: 0, strikeMax: 170,
   cam: { x: 300, y: WORLD - 300, z: 0.6 },
-  mode: null,       // null | 'place' | 'strike' | 'atkmove' | 'box'
+  mode: null,       // null | 'place' | 'atkmove' | 'box'
   ghost: null,      // {type,x,y}
-  ai: { money: 2500, wave: 0, next: 80, think: 3 }
+  ai: { money: 1000, wave: 0, next: 150, think: 3 }
 };
 let ID = 1;
 
@@ -866,34 +860,13 @@ function updateProjs(dt) {
   state.projs = state.projs.filter(p => !p.dead);
 }
 
-/* ============================== A-10 STRIKE ============================== */
-const strikes = [];
-function callStrike(x, y) {
-  strikes.push({ x, y, t: 1.6, n: 5, done: 0 });
-  toast('A-10 inbound!');
-  beep(200, 1.2, 'sawtooth', 0.08, 500);
-}
-function updateStrikes(dt) {
-  for (const s of strikes) {
-    s.t -= dt;
-    if (s.t <= 0 && s.done < s.n) {
-      const bx = s.x + (s.done - s.n / 2) * 52 + rnd(-18, 18), by = s.y + rnd(-30, 30);
-      spawnExplosion(bx, by, 46); boom(0.32, 0.6);
-      for (const u of state.units) if (dist(u.x, u.y, bx, by) < 75) damage(u, 160);
-      for (const b of state.buildings) if (dist(b.x, b.y, bx, by) < 75 + Math.max(b.w, b.h)/2) damage(b, 260);
-      s.done++; s.t = 0.14;
-    }
-  }
-  for (let i = strikes.length - 1; i >= 0; i--) if (strikes[i].done >= strikes[i].n) strikes.splice(i, 1);
-}
-
 /* ============================== ENEMY AI ============================== */
 /* Production-driven AI: units are paid for from a money pool (truck deposits plus a
    modest trickle) and built through the AI's own Barracks/Factory queues at normal
    build speed — no instant spawns. Finished units stage at the base, then attack. */
 function aiUpdate(dt) {
   const ai = state.ai;
-  ai.money += dt * (24 + Math.min(32, state.t / 25));
+  ai.money += dt * (10 + Math.min(22, state.t / 45));
   ai.next -= dt;
   ai.think -= dt;
   if (ai.think > 0) return;
@@ -905,15 +878,20 @@ function aiUpdate(dt) {
     const trucks = state.units.filter(u => u.team === 'gla' && u.d.harvester).length + sup.queue.length;
     if (trucks < 2 && ai.money >= UNITS.truck.cost) { ai.money -= UNITS.truck.cost; sup.queue.push('truck'); }
   }
-  /* feed production queues while affordable */
-  for (const b of [fact, rax]) {
-    if (!b || b.queue.length >= 2) continue;
-    const opts = b === fact ? ['tank', 'tank', 'car'] : ['inf', 'inf', 'rocket'];
-    const type = opts[(Math.random() * opts.length) | 0];
-    if (ai.money >= UNITS[type].cost) { ai.money -= UNITS[type].cost; b.queue.push(type); }
-  }
   /* idle combat units at the base stage up into the next wave */
   const staged = state.units.filter(u => u.team === 'gla' && u.d.dmg && !u.order && !u.tgt && !u.guard);
+  const waveSize = Math.min(2 + ai.wave, 8);
+  /* feed production queues — after an early-game grace period, and never
+     stockpiling (staged + already queued) beyond the next wave's size */
+  const queued = (fact ? fact.queue.length : 0) + (rax ? rax.queue.length : 0);
+  if (state.t > 45 && staged.length + queued < waveSize + 1) {
+    for (const b of [fact, rax]) {
+      if (!b || b.queue.length >= 2) continue;
+      const opts = b === fact ? ['tank', 'tank', 'car'] : ['inf', 'inf', 'rocket'];
+      const type = opts[(Math.random() * opts.length) | 0];
+      if (ai.money >= UNITS[type].cost) { ai.money -= UNITS[type].cost; b.queue.push(type); }
+    }
+  }
   /* maintain a home guard of 3 before committing units to waves */
   const guards = state.units.filter(u => u.team === 'gla' && u.d.dmg && u.guard);
   if (guards.length < 3 && staged.length) {
@@ -922,9 +900,9 @@ function aiUpdate(dt) {
     const home = state.buildings.find(b => b.team === 'gla' && b.type === 'cc') || state.buildings.find(b => b.team === 'gla');
     if (home) orderMove(g, home.x + rnd(-140, 60), home.y + rnd(80, 200), false);
   }
-  const waveSize = Math.min(3 + ai.wave, 9);
-  if (staged.length >= waveSize || (ai.next <= 0 && staged.length >= 3)) {
-    ai.wave++; ai.next = 45;
+  /* waves launch on the timer with whatever has staged — never "as soon as possible" */
+  if (ai.next <= 0 && staged.length >= 2) {
+    ai.wave++; ai.next = 70;
     const tgts = state.buildings.filter(b => b.team === 'usa');
     let tx = 300, ty = WORLD - 300;
     if (tgts.length) { const t = tgts[(Math.random() * tgts.length) | 0]; tx = t.x; ty = t.y; }
@@ -1066,15 +1044,6 @@ function render() {
       ctx.fillStyle = '#ffb85e'; ctx.beginPath(); ctx.arc(p.x - Math.cos(p.a||0)*6, p.y - Math.sin(p.a||0)*6, 3, 0, TAU); ctx.fill();
     }
   }
-  /* strike shadows */
-  for (const s of strikes) {
-    ctx.fillStyle = 'rgba(255,60,40,.7)';
-    for (let i = 0; i < s.n; i++) {
-      const bx = s.x + (i - s.n/2) * 52;
-      ctx.beginPath(); ctx.arc(bx, s.y, 10 + 4 * Math.sin(state.t * 8 + i), 0, TAU); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,60,40,.8)'; ctx.lineWidth = 2.5;
-    }
-  }
   /* particles */
   for (const p of state.parts) {
     const f = p.life / p.max;
@@ -1105,12 +1074,6 @@ function render() {
     ctx.strokeStyle = ok ? 'rgba(110,255,110,.95)' : 'rgba(255,70,50,.95)';
     ctx.lineWidth = 3;
     ctx.strokeRect(g.x - d.w/2, g.y - d.h/2, d.w, d.h);
-  }
-  /* strike target hint */
-  if (state.mode === 'strike') {
-    ctx.strokeStyle = 'rgba(255,80,60,.9)'; ctx.lineWidth = 2; ctx.setLineDash([8,8]);
-    const [wx, wy] = screenToWorld(VW/2, VH/2);
-    ctx.beginPath(); ctx.arc(wx, wy, 90, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
   }
   ctx.restore();
   /* box select rect (screen space) */
@@ -1228,13 +1191,6 @@ function handleTap(sx, sy) {
   if (state.over) return;
   const [wx, wy] = screenToWorld(sx, sy);
   /* modes first */
-  if (state.mode === 'strike') {
-    state.mode = null;
-    state.strikeCd = state.strikeMax;
-    callStrike(wx, wy);
-    updStrikeBtn();
-    return;
-  }
   if (state.mode === 'place' && state.ghost) {
     /* tap moves the ghost; confirm via ✓ button */
     state.ghost.x = Math.round(wx / 10) * 10; state.ghost.y = Math.round(wy / 10) * 10;
@@ -1429,19 +1385,6 @@ function updHud() {
   elPower.textContent = '⚡' + p.use + '/' + p.gen;
   elPower.className = 'stat ' + (p.ok ? 'ok' : 'bad');
 }
-const btnStrike = document.getElementById('btnStrike');
-function updStrikeBtn() {
-  const f = 1 - state.strikeCd / state.strikeMax;
-  btnStrike.querySelector('.fill').style.width = (f * 100) + '%';
-  btnStrike.className = 'tbtn ' + (state.mode === 'strike' ? 'armed' : state.strikeCd <= 0 ? 'ready' : 'charging');
-}
-btnStrike.addEventListener('click', () => {
-  audioInit();
-  if (state.strikeCd > 0) { toast('A-10 strike charging… ' + Math.ceil(state.strikeCd) + 's'); return; }
-  state.mode = state.mode === 'strike' ? null : 'strike';
-  if (state.mode === 'strike') toast('✈️ Tap target location');
-  updStrikeBtn();
-});
 document.getElementById('btnArmy').addEventListener('click', () => {
   audioInit();
   state.sel = state.units.filter(u => u.team === 'usa' && u.d.dmg);
@@ -1466,20 +1409,18 @@ function frame(now) {
   if (!started) { render(); return; }
   if (!state.over) {
     state.t += dt;
-    if (state.strikeCd > 0) { state.strikeCd -= dt; if (state.strikeCd <= 0) { state.strikeCd = 0; toast('✈️ A-10 strike READY'); } }
     const pow = powerStat();
     for (const u of state.units) updateUnit(u, dt);
     separate(dt);
     for (const b of state.buildings) updateBuilding(b, dt, pow);
     updateProjs(dt);
-    updateStrikes(dt);
     aiUpdate(dt);
     /* particles */
     for (const p of state.parts) { p.life -= dt; p.x += (p.vx || 0) * dt; p.y += (p.vy || 0) * dt; }
     state.parts = state.parts.filter(p => p.life > 0);
     if (state.parts.length > 400) state.parts.splice(0, state.parts.length - 400);
     hudT -= dt;
-    if (hudT <= 0) { hudT = 0.25; updHud(); updStrikeBtn(); }
+    if (hudT <= 0) { hudT = 0.25; updHud(); }
   }
   render();
 }
@@ -1497,16 +1438,16 @@ function resetGame() {
   state.units.length = 0; state.buildings.length = 0; state.piles.length = 0;
   state.projs.length = 0; state.parts.length = 0; state.decos.length = 0;
   state.sel = []; state.selB = null;
-  state.strikeCd = state.strikeMax; state.mode = null; state.ghost = null;
-  state.ai = { money: 2500, wave: 0, next: 80, think: 3 };
-  strikes.length = 0; ID = 1;
+  state.mode = null; state.ghost = null;
+  state.ai = { money: 1000, wave: 0, next: 150, think: 3 };
+  ID = 1;
   boxMode = false; boxRect = null; panStart = null; pinch = null; updToggle();
   genMap();
   renderTerrain();
   state.cam.z = clamp(Math.min(VW, VH) / 520, 0.55, 1.0);
   state.cam.x = 340; state.cam.y = WORLD - 340;
   clampCam();
-  rebuildBar(); updHud(); updStrikeBtn();
+  rebuildBar(); updHud();
 }
 window.restartMatch = () => {
   resetGame();

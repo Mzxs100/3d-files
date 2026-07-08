@@ -92,6 +92,7 @@
       <li>Trucks <b>loop gathering automatically</b>. Trucks &amp; dozers <b>repair</b>: tap a damaged building, or they fix nearby structures when idle. Dozers resume unfinished construction.</li>
       <li><b>⟳</b> (or the R key) restarts the match.</li>
       <li>Keep <b>⚡ power</b> positive or production slows and defenses go offline.</li>
+      <li><b>Fog of war</b> hides the enemy — send a scout to reveal the map. Explored ground stays on your minimap.</li>
     </ul>
     <p><b>Mission:</b> the GLA holds the north-east. Destroy every enemy structure. They will send raids — dig in fast, General.</p>
     <button id="btnStart">DEPLOY</button>
@@ -388,6 +389,42 @@ function genMap() {
   makeUnit('gla', 'inf', ex - 200, ey + 300).guard = true;
   makeUnit('gla', 'inf', ex - 300, ey + 200).guard = true;
   makeUnit('gla', 'tank', ex - 160, ey + 380).guard = true;
+}
+
+/* ============================== FOG OF WAR ============================== */
+/* Two layers on a coarse grid: vis = currently in sight range of a USA unit or
+   building (re-stamped every 0.15s), seen = explored memory. Enemy units render
+   only when visible; enemy structures and supply piles render once explored. */
+const FOW = (() => {
+  const n = (WORLD / 40) | 0;
+  const cv = document.createElement('canvas'); cv.width = cv.height = n;
+  return { cell: 40, n, vis: new Uint8Array(n * n), seen: new Uint8Array(n * n), t: 0, cv, ctx: cv.getContext('2d') };
+})();
+function visAt(x, y) { const n = FOW.n, c = FOW.cell; return FOW.vis[clamp((y / c) | 0, 0, n - 1) * n + clamp((x / c) | 0, 0, n - 1)]; }
+function seenAt(x, y) { const n = FOW.n, c = FOW.cell; return FOW.seen[clamp((y / c) | 0, 0, n - 1) * n + clamp((x / c) | 0, 0, n - 1)]; }
+function fowStamp(x, y, r) {
+  const c = FOW.cell, n = FOW.n, r2 = r * r;
+  const x0 = Math.max(0, ((x - r) / c) | 0), x1 = Math.min(n - 1, ((x + r) / c) | 0);
+  const y0 = Math.max(0, ((y - r) / c) | 0), y1 = Math.min(n - 1, ((y + r) / c) | 0);
+  for (let gy = y0; gy <= y1; gy++) for (let gx = x0; gx <= x1; gx++) {
+    const dx = gx * c + c / 2 - x, dy = gy * c + c / 2 - y;
+    if (dx * dx + dy * dy <= r2) { const i = gy * n + gx; FOW.vis[i] = 1; FOW.seen[i] = 1; }
+  }
+}
+function fowUpdate(dt, force) {
+  FOW.t -= dt;
+  if (FOW.t > 0 && !force) return;
+  FOW.t = 0.15;
+  FOW.vis.fill(0);
+  for (const u of state.units) if (u.team === 'usa') fowStamp(u.x, u.y, u.d.sight);
+  for (const b of state.buildings) if (b.team === 'usa' && b.built) fowStamp(b.x, b.y, 300);
+  const img = FOW.ctx.createImageData(FOW.n, FOW.n), d = img.data;
+  for (let i = 0; i < FOW.vis.length; i++) {
+    const o = i * 4;
+    d[o] = 8; d[o + 1] = 11; d[o + 2] = 5;
+    d[o + 3] = FOW.vis[i] ? 0 : FOW.seen[i] ? 115 : 242;
+  }
+  FOW.ctx.putImageData(img, 0, 0);
 }
 
 /* ============================== TERRAIN PRERENDER ============================== */
@@ -973,12 +1010,13 @@ function render() {
   ctx.drawImage(terrain, 0, 0, WORLD, WORLD);
   /* supply piles */
   for (const p of state.piles) {
-    if (p.amt <= 0) continue;
+    if (p.amt <= 0 || !seenAt(p.x, p.y)) continue;
     const s = 40 + 44 * (p.amt / p.max);
     ctx.drawImage(ASSETS.supplyPile, p.x - s/2, p.y - s/2, s, s);
   }
   /* buildings */
   for (const b of state.buildings) {
+    if (b.team === 'gla' && !seenAt(b.x, b.y)) continue;
     const img = ASSETS[b.team + '_' + b.d.svg];
     if (!b.built) {
       ctx.globalAlpha = 0.45 + 0.5 * b.prog;
@@ -1021,6 +1059,7 @@ function render() {
   }
   /* units */
   for (const u of state.units) {
+    if (u.team === 'gla' && !visAt(u.x, u.y)) continue;
     const img = ASSETS[u.team + '_' + u.d.svg];
     ctx.save(); ctx.translate(u.x, u.y); ctx.rotate(u.a);
     ctx.drawImage(img, -u.d.size/2, -u.d.size/2, u.d.size, u.d.size);
@@ -1030,6 +1069,7 @@ function render() {
   }
   /* projectiles */
   for (const p of state.projs) {
+    if (!visAt(p.x, p.y)) continue;
     if (p.kind === 'bullet') {
       ctx.strokeStyle = '#ffe9a0'; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(p.x, p.y);
@@ -1046,6 +1086,7 @@ function render() {
   }
   /* particles */
   for (const p of state.parts) {
+    if (!visAt(p.x, p.y)) continue;
     const f = p.life / p.max;
     if (p.c === 'flash') {
       ctx.fillStyle = `rgba(255,240,180,${f * 0.85})`;
@@ -1064,6 +1105,8 @@ function render() {
       ctx.globalAlpha = 1;
     }
   }
+  /* fog of war */
+  ctx.drawImage(FOW.cv, 0, 0, WORLD, WORLD);
   /* placement ghost */
   if (state.mode === 'place' && state.ghost) {
     const g = state.ghost, d = BUILDINGS[g.type];
@@ -1090,15 +1133,18 @@ function renderMinimap() {
   const s = 126 / WORLD;
   mmCtx.fillStyle = '#26350f'; mmCtx.fillRect(0, 0, 126, 126);
   mmCtx.fillStyle = '#c9a53e';
-  for (const p of state.piles) if (p.amt > 0) mmCtx.fillRect(p.x * s - 2, p.y * s - 2, 4, 4);
+  for (const p of state.piles) if (p.amt > 0 && seenAt(p.x, p.y)) mmCtx.fillRect(p.x * s - 2, p.y * s - 2, 4, 4);
   for (const b of state.buildings) {
+    if (b.team === 'gla' && !seenAt(b.x, b.y)) continue;
     mmCtx.fillStyle = b.team === 'usa' ? '#5aa2ff' : '#ff5540';
     mmCtx.fillRect(b.x * s - 2.5, b.y * s - 2.5, 5, 5);
   }
   for (const u of state.units) {
+    if (u.team === 'gla' && !visAt(u.x, u.y)) continue;
     mmCtx.fillStyle = u.team === 'usa' ? '#9fd0ff' : '#ff9585';
     mmCtx.fillRect(u.x * s - 1.5, u.y * s - 1.5, 3, 3);
   }
+  mmCtx.drawImage(FOW.cv, 0, 0, 126, 126);
   const c = state.cam;
   mmCtx.strokeStyle = 'rgba(255,255,255,.8)'; mmCtx.lineWidth = 1;
   mmCtx.strokeRect((c.x - VW/2/c.z) * s, (c.y - VH/2/c.z) * s, VW/c.z * s, VH/c.z * s);
@@ -1181,9 +1227,15 @@ cv.addEventListener('wheel', e => { e.preventDefault(); state.cam.z = clamp(stat
 function normRect(b) { return { x: Math.min(b.x1, b.x2), y: Math.min(b.y1, b.y2), w: Math.abs(b.x2 - b.x1), h: Math.abs(b.y2 - b.y1) }; }
 
 function hitTest(wx, wy) {
-  for (const u of state.units) if (dist(wx, wy, u.x, u.y) < Math.max(u.d.r + 8, 20)) return u;
-  for (const b of state.buildings) if (ptInRect(wx, wy, bldRect(b, 4))) return b;
-  for (const p of state.piles) if (p.amt > 0 && dist(wx, wy, p.x, p.y) < 45) return p;
+  for (const u of state.units) {
+    if (u.team === 'gla' && !visAt(u.x, u.y)) continue;
+    if (dist(wx, wy, u.x, u.y) < Math.max(u.d.r + 8, 20)) return u;
+  }
+  for (const b of state.buildings) {
+    if (b.team === 'gla' && !seenAt(b.x, b.y)) continue;
+    if (ptInRect(wx, wy, bldRect(b, 4))) return b;
+  }
+  for (const p of state.piles) if (p.amt > 0 && seenAt(p.x, p.y) && dist(wx, wy, p.x, p.y) < 45) return p;
   return null;
 }
 
@@ -1415,6 +1467,7 @@ function frame(now) {
     for (const b of state.buildings) updateBuilding(b, dt, pow);
     updateProjs(dt);
     aiUpdate(dt);
+    fowUpdate(dt);
     /* particles */
     for (const p of state.parts) { p.life -= dt; p.x += (p.vx || 0) * dt; p.y += (p.vy || 0) * dt; }
     state.parts = state.parts.filter(p => p.life > 0);
@@ -1444,6 +1497,9 @@ function resetGame() {
   boxMode = false; boxRect = null; panStart = null; pinch = null; updToggle();
   genMap();
   renderTerrain();
+  FOW.vis.fill(0); FOW.seen.fill(0);
+  fowStamp(300, WORLD - 300, 660); /* clear the shroud around the start position */
+  fowUpdate(0, true);
   state.cam.z = clamp(Math.min(VW, VH) / 520, 0.55, 1.0);
   state.cam.x = 340; state.cam.y = WORLD - 340;
   clampCam();

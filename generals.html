@@ -75,6 +75,7 @@
   <button class="tbtn charging" id="btnStrike" title="A-10 Strike"><span class="fill"></span><span style="position:relative">✈️</span></button>
   <button class="tbtn" id="btnArmy" title="Select army">⚔</button>
   <button class="tbtn" id="btnBox" title="Box select">⬚</button>
+  <button class="tbtn" id="btnRestart" title="Restart match">⟳</button>
   <button class="tbtn" id="btnSnd" title="Sound">🔊</button>
 </div>
 
@@ -92,6 +93,8 @@
       <li><b>Drag</b> to pan the map · <b>pinch</b> to zoom · tap the <b>minimap</b> to jump.</li>
       <li><b>⬚</b> toggles drag-box multi-select · <b>⚔</b> selects your whole army.</li>
       <li>Select the <b>Dozer</b> to construct buildings. Build a <b>Supply Center</b> — its <b>Chinook truck</b> gathers supply crates for cash.</li>
+      <li>Trucks <b>loop gathering automatically</b>. Trucks &amp; dozers <b>repair</b>: tap a damaged building, or they fix nearby structures when idle. Dozers resume unfinished construction.</li>
+      <li><b>⟳</b> (or the R key) restarts the match.</li>
       <li>Keep <b>⚡ power</b> positive or production slows and defenses go offline.</li>
       <li><b>✈️ A-10 Strike</b> charges over time — devastating on enemy structures.</li>
     </ul>
@@ -339,7 +342,7 @@ const state = {
   cam: { x: 300, y: WORLD - 300, z: 0.6 },
   mode: null,       // null | 'place' | 'strike' | 'atkmove' | 'box'
   ghost: null,      // {type,x,y}
-  ai: { wave: 0, next: 75 }
+  ai: { money: 2500, wave: 0, next: 80, think: 3 }
 };
 let ID = 1;
 
@@ -347,6 +350,7 @@ function makeUnit(team, type, x, y) {
   const d = UNITS[type];
   const u = { id: ID++, kind:'unit', team, type, x, y, a: team === 'usa' ? -Math.PI/4 : Math.PI*0.75,
     hp: d.hp, maxhp: d.hp, cd: 0, order: null, tgt: null, load: 0, hState: 0, hTimer: 0, pileId: 0,
+    px: x, py: y, stuckT: 0, idleT: 0, guard: false, detour: null, avoid: 0,
     d };
   state.units.push(u);
   return u;
@@ -363,9 +367,9 @@ function makePile(x, y, amt) { state.piles.push({ id: ID++, x, y, amt, max: amt 
 
 /* --- map generation --- */
 function genMap() {
-  makePile(430, WORLD - 640, 4500); makePile(660, WORLD - 430, 4500);
-  makePile(WORLD - 430, 640, 4500); makePile(WORLD - 660, 430, 4500);
-  makePile(WORLD/2 - 130, WORLD/2 + 130, 7000); makePile(WORLD/2 + 130, WORLD/2 - 130, 7000);
+  makePile(430, WORLD - 640, 9000); makePile(660, WORLD - 430, 9000);
+  makePile(WORLD - 430, 640, 9000); makePile(WORLD - 660, 430, 9000);
+  makePile(WORLD/2 - 130, WORLD/2 + 130, 12000); makePile(WORLD/2 + 130, WORLD/2 - 130, 12000);
   for (let i = 0; i < 90; i++) {
     const x = rnd(60, WORLD - 60), y = rnd(60, WORLD - 60);
     if (dist(x, y, 300, WORLD - 300) < 380 || dist(x, y, WORLD - 300, 300) < 460) continue;
@@ -387,9 +391,9 @@ function genMap() {
   makeBuilding('gla', 'turret', ex - 330, ey + 240, true);
   makeBuilding('gla', 'turret', ex - 120, ey + 330, true);
   makeBuilding('gla', 'turret', ex - 400, ey + 120, true);
-  makeUnit('gla', 'inf', ex - 200, ey + 300);
-  makeUnit('gla', 'inf', ex - 300, ey + 200);
-  makeUnit('gla', 'tank', ex - 160, ey + 380);
+  makeUnit('gla', 'inf', ex - 200, ey + 300).guard = true;
+  makeUnit('gla', 'inf', ex - 300, ey + 200).guard = true;
+  makeUnit('gla', 'tank', ex - 160, ey + 380).guard = true;
 }
 
 /* ============================== TERRAIN PRERENDER ============================== */
@@ -516,17 +520,81 @@ function damage(e, dmg, splash) {
 /* ============================== ORDERS ============================== */
 function orderMove(u, x, y, atk) {
   u.order = { t: atk ? 'atkmove' : 'move', x, y };
-  u.tgt = null; u.hState = 0;
+  u.tgt = null; u.hState = 0; u.site = null; u.detour = null; u.avoid = 0;
 }
 function orderAttack(u, tgt) { if (u.d.dmg) { u.order = { t: 'attack' }; u.tgt = tgt; } else orderMove(u, tgt.x, tgt.y); }
 function orderHarvest(u, pile) { if (!u.d.harvester) return; u.order = { t: 'harvest' }; u.hState = 1; u.pileId = pile ? pile.id : 0; }
 function orderBuild(u, type, x, y) { u.order = { t: 'build', bt: type, x, y }; u.site = null; }
+function orderResume(u, b) { u.order = { t: 'build', bt: b.type, x: b.x, y: b.y, resume: b.id, ignore: b.id }; u.site = null; }
+function orderRepair(u, b) { u.order = { t: 'repair', target: b, ignore: b.id }; u.tgt = null; u.site = null; }
 
 /* ============================== UNIT UPDATE ============================== */
+function segHitsRect(x1, y1, x2, y2, r) {
+  for (let t = 0.2; t <= 1.001; t += 0.2)
+    if (ptInRect(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t, r)) return true;
+  return false;
+}
+function headingBlocked(u, want) {
+  const look = 44 + u.d.r + u.d.speed * 0.3;
+  const tx = u.x + Math.cos(want) * look, ty = u.y + Math.sin(want) * look;
+  const ig = u.order ? u.order.ignore : 0;
+  let block = null, bd = 1e9;
+  for (const b of state.buildings) {
+    if (b === u.site || b.id === ig) continue;
+    const r = bldRect(b, u.d.r + 4);
+    if (ptInRect(u.x, u.y, r) || segHitsRect(u.x, u.y, tx, ty, r)) {
+      const d = dist(u.x, u.y, b.x, b.y);
+      if (d < bd) { bd = d; block = b; }
+    }
+  }
+  return block;
+}
+/* Wall-follow corner for a blocking rect: from the unit's nearest edge, return the
+   corner "ahead" in rotational direction dir (1 = clockwise on screen, -1 = ccw).
+   If already standing at that corner, advance to the next one around the rect. */
+function cornerFor(u, block, dir) {
+  const rc = bldRect(block, u.d.r + 10);
+  const tl = [rc.x, rc.y], tr = [rc.x + rc.w, rc.y], br = [rc.x + rc.w, rc.y + rc.h], bl = [rc.x, rc.y + rc.h];
+  const dl = Math.abs(u.x - rc.x), dr = Math.abs(rc.x + rc.w - u.x);
+  const dtp = Math.abs(u.y - rc.y), db = Math.abs(rc.y + rc.h - u.y);
+  const m = Math.min(dl, dr, dtp, db);
+  let c;
+  if (m === dtp)     c = dir === 1 ? tr : tl;   /* along top edge    */
+  else if (m === dr) c = dir === 1 ? br : tr;   /* along right edge  */
+  else if (m === db) c = dir === 1 ? bl : br;   /* along bottom edge */
+  else               c = dir === 1 ? tl : bl;   /* along left edge   */
+  if (dist(u.x, u.y, c[0], c[1]) < 16) {
+    const order = dir === 1 ? [tl, tr, br, bl] : [tl, bl, br, tr];
+    let i = 0, bd = 1e9;
+    for (let k = 0; k < 4; k++) { const d = dist(u.x, u.y, order[k][0], order[k][1]); if (d < bd) { bd = d; i = k; } }
+    c = order[(i + 1) % 4];
+  }
+  return c;
+}
+/* Steering (bug-algorithm style): when the direct heading is blocked, commit to one
+   rotational direction and wall-follow the blocking rects — adjacent buildings hand
+   off naturally and the fixed direction prevents ping-ponging along walls. */
+function steerAngle(u, want, gx, gy) {
+  const block = headingBlocked(u, want);
+  if (!block) { u.avoid = 0; return want; }
+  if (!u.avoid) { /* pick the cheaper side once, then stick with it */
+    const cw = cornerFor(u, block, 1), ccw = cornerFor(u, block, -1);
+    const s1 = dist(u.x, u.y, cw[0], cw[1]) + dist(cw[0], cw[1], gx, gy);
+    const s2 = dist(u.x, u.y, ccw[0], ccw[1]) + dist(ccw[0], ccw[1], gx, gy);
+    u.avoid = s1 <= s2 ? 1 : -1;
+  }
+  const c = cornerFor(u, block, u.avoid);
+  return Math.atan2(c[1] - u.y, c[0] - u.x);
+}
 function moveToward(u, tx, ty, dt, arrive) {
-  const d = dist(u.x, u.y, tx, ty);
-  if (d < (arrive || 6)) return true;
-  const want = Math.atan2(ty - u.y, tx - u.x);
+  if (u.detour) {
+    u.detour.ttl -= dt;
+    if (u.detour.ttl <= 0 || dist(u.x, u.y, u.detour.x, u.detour.y) < 16) u.detour = null;
+  }
+  if (dist(u.x, u.y, tx, ty) < (arrive || 6)) { u.stuckT = 0; return true; }
+  const gx = u.detour ? u.detour.x : tx, gy = u.detour ? u.detour.y : ty;
+  let want = Math.atan2(gy - u.y, gx - u.x);
+  want = steerAngle(u, want, gx, gy);
   const turn = 6 * dt;
   const diff = angDiff(u.a, want);
   u.a += clamp(diff, -turn, turn);
@@ -534,6 +602,18 @@ function moveToward(u, tx, ty, dt, arrive) {
   u.x += Math.cos(u.a) * sp * dt;
   u.y += Math.sin(u.a) * sp * dt;
   u.x = clamp(u.x, 20, WORLD - 20); u.y = clamp(u.y, 20, WORLD - 20);
+  /* stuck detection: if crowding/walls cancel our motion for a while, sidestep */
+  const moved = dist(u.x, u.y, u.px, u.py);
+  u.px = u.x; u.py = u.y;
+  if (moved < sp * dt * 0.35) u.stuckT += dt; else u.stuckT = Math.max(0, u.stuckT - dt * 2);
+  if (u.stuckT > 0.85) {
+    u.stuckT = 0;
+    const side = Math.random() < 0.5 ? 1 : -1;
+    const a = want + side * (Math.PI / 2 + rnd(0, 0.5));
+    const hop = rnd(55, 105);
+    u.detour = { x: clamp(u.x + Math.cos(a) * hop, 20, WORLD - 20),
+                 y: clamp(u.y + Math.sin(a) * hop, 20, WORLD - 20), ttl: 1.5 };
+  }
   return false;
 }
 function fireAt(sh, tgt, d) {
@@ -575,15 +655,50 @@ function updateUnit(u, dt) {
       if (e) { u.tgt = e; if (o) { u.order = { t: 'attack', res: o }; } else u.order = { t: 'attack', res: null }; return; }
     }
   }
-  if (!o) return;
+  if (!o) {
+    /* idle worker automation: resume construction, repair, then gather */
+    if (u.d.builder || u.d.harvester) {
+      u.idleT += dt;
+      if (u.idleT > 2.2) {
+        u.idleT = 0;
+        if (u.d.builder) {
+          const site = state.buildings.find(b => b.team === u.team && !b.built &&
+            dist(u.x, u.y, b.x, b.y) < 360 && !state.units.some(w => w.site === b));
+          if (site) { orderResume(u, site); return; }
+        }
+        let best = null, bd = 1e9;
+        for (const b of state.buildings) {
+          if (b.team !== u.team || !b.built || b.hp > b.maxhp - 1) continue;
+          const d = dist(u.x, u.y, b.x, b.y);
+          if (d < 280 && d < bd) { bd = d; best = b; }
+        }
+        if (!best) for (const v of state.units) {
+          if (v.team !== u.team || v === u || v.d.r < 12 || v.hp > v.maxhp - 1) continue;
+          const d = dist(u.x, u.y, v.x, v.y);
+          if (d < 220 && d < bd) { bd = d; best = v; }
+        }
+        if (best) { orderRepair(u, best); return; }
+        if (u.d.harvester && findDepot(u) && findPile(u)) orderHarvest(u, findPile(u));
+      }
+    }
+    return;
+  }
   if (o.t === 'move' || o.t === 'atkmove') {
     if (moveToward(u, o.x, o.y, dt, 14)) u.order = null;
   } else if (o.t === 'harvest' && u.d.harvester) {
-    if (u.hState === 1) { /* go to pile */
+    if (u.hState === 1) { /* go to pile — slot positions so trucks don't fight over one spot */
       let p = state.piles.find(p => p.id === u.pileId && p.amt > 0) || findPile(u);
-      if (!p) { u.order = null; toast('Supplies exhausted'); return; }
+      if (!p) { /* wait and keep looking rather than going idle */
+        u.hTimer -= dt;
+        if (u.hTimer <= 0) {
+          u.hTimer = 6;
+          if (u.team === 'usa' && state.t - (state.supToastT || 0) > 8) { state.supToastT = state.t; toast('Supplies exhausted'); }
+        }
+        return;
+      }
       u.pileId = p.id;
-      if (moveToward(u, p.x, p.y, dt, 52)) { u.hState = 2; u.hTimer = 2.6; }
+      const slot = (u.id % 8) / 8 * TAU;
+      if (moveToward(u, p.x + Math.cos(slot) * 36, p.y + Math.sin(slot) * 36, dt, 24)) { u.hState = 2; u.hTimer = 2.1; }
     } else if (u.hState === 2) { /* loading */
       u.hTimer -= dt;
       const p = state.piles.find(p => p.id === u.pileId);
@@ -594,22 +709,36 @@ function updateUnit(u, dt) {
       }
     } else if (u.hState === 3) { /* return */
       const dep = findDepot(u);
-      if (!dep) { u.order = null; toast('Build a Supply Center to deposit supplies'); return; }
-      if (moveToward(u, dep.x, dep.y + dep.h / 2 + 30, dt, 44)) {
+      if (!dep) { /* keep the load and wait for a depot instead of dropping the order */
+        u.hTimer -= dt;
+        if (u.hTimer <= 0) {
+          u.hTimer = 8;
+          if (u.team === 'usa' && state.t - (state.supToastT || 0) > 8) { state.supToastT = state.t; toast('Build a Supply Center to deposit supplies'); }
+        }
+        return;
+      }
+      const slotX = ((u.id % 5) - 2) * 26;
+      if (moveToward(u, dep.x + slotX, dep.y + dep.h / 2 + 32, dt, 40)) {
         if (u.team === 'usa') {
           state.money += u.load;
           state.parts.push({ x: u.x, y: u.y - 22, vx: 0, vy: -26, life: 1, max: 1, sz: 13, c: 'text', txt: '+$' + u.load });
           beep(1150, 0.09, 'sine', 0.06, 300);
-        }
+        } else state.ai.money += u.load;
         u.load = 0; u.hState = 1;
       }
     }
   } else if (o.t === 'build' && u.d.builder) {
     if (!u.site) {
+      const resume = o.resume ? state.buildings.find(b => b.id === o.resume) : null;
+      if (o.resume && !resume) { u.order = null; return; }
       if (moveToward(u, o.x, o.y + BUILDINGS[o.bt].h / 2 + 26, dt, 34)) {
-        if (state.money < BUILDINGS[o.bt].cost) { toast('Insufficient funds'); u.order = null; return; }
-        state.money -= BUILDINGS[o.bt].cost;
-        u.site = makeBuilding(u.team, o.bt, o.x, o.y, false);
+        if (resume) u.site = resume; /* already paid for — resume free of charge */
+        else {
+          if (state.money < BUILDINGS[o.bt].cost) { toast('Insufficient funds'); u.order = null; return; }
+          state.money -= BUILDINGS[o.bt].cost;
+          u.site = makeBuilding(u.team, o.bt, o.x, o.y, false);
+        }
+        o.ignore = u.site.id;
         beep(500, 0.12, 'triangle', 0.06, 200);
       }
     } else {
@@ -625,10 +754,23 @@ function updateUnit(u, dt) {
         rebuildBar();
       }
     }
+  } else if (o.t === 'repair') {
+    const b = o.target;
+    const alive = b && b.hp > 0 && (b.kind === 'bld' ? state.buildings.includes(b) : state.units.includes(b));
+    if (!alive || b.hp >= b.maxhp) { u.order = null; return; }
+    const rr = (b.kind === 'bld' ? Math.max(b.w, b.h) / 2 : b.d.r) + u.d.r + 16;
+    if (dist(u.x, u.y, b.x, b.y) > rr + 6) { moveToward(u, b.x, b.y, dt, rr); return; }
+    b.hp = Math.min(b.maxhp, b.hp + (b.kind === 'bld' ? 50 : 30) * dt);
+    if (Math.random() < 9 * dt) {
+      const s = b.kind === 'bld' ? b.w / 3 : 10;
+      state.parts.push({ x: b.x + rnd(-s, s), y: b.y + rnd(-s, s), vx: rnd(-10, 10), vy: rnd(-32, -10),
+        life: 0.35, max: 0.35, sz: 3.5, c: '#9fe8ff' });
+    }
   }
 }
 
 /* separation so units don't stack */
+function isMoving(u) { return !!u.order && !(u.d.harvester && u.hState === 2); }
 function separate(dt) {
   const us = state.units;
   for (let i = 0; i < us.length; i++) {
@@ -639,10 +781,15 @@ function separate(dt) {
       const rr = a.d.r + b.d.r + 2;
       const d2 = dx * dx + dy * dy;
       if (d2 < rr * rr && d2 > 0.01) {
-        const d = Math.sqrt(d2), push = (rr - d) / 2;
+        const d = Math.sqrt(d2), overlap = rr - d;
         const nx = dx / d, ny = dy / d;
-        a.x -= nx * push; a.y -= ny * push;
-        b.x += nx * push; b.y += ny * push;
+        /* moving units shove stationary ones aside instead of both grinding to a halt */
+        const am = isMoving(a), bm = isMoving(b);
+        let wa = 0.5, wb = 0.5;
+        if (am && !bm) { wa = 0.12; wb = 0.88; }
+        else if (bm && !am) { wa = 0.88; wb = 0.12; }
+        a.x -= nx * overlap * wa; a.y -= ny * overlap * wa;
+        b.x += nx * overlap * wb; b.y += ny * overlap * wb;
       }
     }
     /* push out of buildings */
@@ -741,34 +888,48 @@ function updateStrikes(dt) {
 }
 
 /* ============================== ENEMY AI ============================== */
+/* Production-driven AI: units are paid for from a money pool (truck deposits plus a
+   modest trickle) and built through the AI's own Barracks/Factory queues at normal
+   build speed — no instant spawns. Finished units stage at the base, then attack. */
 function aiUpdate(dt) {
   const ai = state.ai;
+  ai.money += dt * (24 + Math.min(32, state.t / 25));
   ai.next -= dt;
-  if (ai.next <= 0) {
-    ai.wave++;
-    ai.next = Math.max(38, 72 - ai.wave * 3);
-    const rax = state.buildings.find(b => b.team === 'gla' && b.type === 'rax' && b.built);
-    const fact = state.buildings.find(b => b.team === 'gla' && b.type === 'fact' && b.built);
-    const grp = [];
-    const n = Math.min(3 + ai.wave, 9);
-    for (let i = 0; i < n; i++) {
-      let type, src;
-      if (fact && (i % 3 === 2 || ai.wave > 4 && i % 2 === 0)) { type = Math.random() < 0.7 ? 'tank' : 'car'; src = fact; }
-      else if (rax) { type = Math.random() < 0.65 ? 'inf' : 'rocket'; src = rax; }
-      else if (fact) { type = 'tank'; src = fact; }
-      else return; /* no production left */
-      grp.push(makeUnit('gla', type, src.x + rnd(-40, 40), src.y + src.h / 2 + 30 + rnd(0, 50)));
-    }
-    /* target: player's most valuable building, or units */
+  ai.think -= dt;
+  if (ai.think > 0) return;
+  ai.think = 2;
+  const alive = t => state.buildings.find(b => b.team === 'gla' && b.type === t && b.built);
+  const rax = alive('rax'), fact = alive('fact'), sup = alive('sup');
+  /* keep a small harvesting fleet running */
+  if (sup) {
+    const trucks = state.units.filter(u => u.team === 'gla' && u.d.harvester).length + sup.queue.length;
+    if (trucks < 2 && ai.money >= UNITS.truck.cost) { ai.money -= UNITS.truck.cost; sup.queue.push('truck'); }
+  }
+  /* feed production queues while affordable */
+  for (const b of [fact, rax]) {
+    if (!b || b.queue.length >= 2) continue;
+    const opts = b === fact ? ['tank', 'tank', 'car'] : ['inf', 'inf', 'rocket'];
+    const type = opts[(Math.random() * opts.length) | 0];
+    if (ai.money >= UNITS[type].cost) { ai.money -= UNITS[type].cost; b.queue.push(type); }
+  }
+  /* idle combat units at the base stage up into the next wave */
+  const staged = state.units.filter(u => u.team === 'gla' && u.d.dmg && !u.order && !u.tgt && !u.guard);
+  /* maintain a home guard of 3 before committing units to waves */
+  const guards = state.units.filter(u => u.team === 'gla' && u.d.dmg && u.guard);
+  if (guards.length < 3 && staged.length) {
+    const g = staged.pop();
+    g.guard = true;
+    const home = state.buildings.find(b => b.team === 'gla' && b.type === 'cc') || state.buildings.find(b => b.team === 'gla');
+    if (home) orderMove(g, home.x + rnd(-140, 60), home.y + rnd(80, 200), false);
+  }
+  const waveSize = Math.min(3 + ai.wave, 9);
+  if (staged.length >= waveSize || (ai.next <= 0 && staged.length >= 3)) {
+    ai.wave++; ai.next = 45;
     const tgts = state.buildings.filter(b => b.team === 'usa');
     let tx = 300, ty = WORLD - 300;
     if (tgts.length) { const t = tgts[(Math.random() * tgts.length) | 0]; tx = t.x; ty = t.y; }
-    for (const u of grp) orderMove(u, tx + rnd(-60, 60), ty + rnd(-60, 60), true);
+    for (const u of staged) orderMove(u, tx + rnd(-60, 60), ty + rnd(-60, 60), true);
     if (ai.wave === 1) toast('⚠ GLA forces spotted advancing!');
-  }
-  /* idle enemy harvesting for flavor */
-  for (const u of state.units) {
-    if (u.team === 'gla' && u.d.harvester && !u.order) orderHarvest(u, findPile(u));
   }
 }
 
@@ -787,10 +948,10 @@ function endGame(win) {
   ov.querySelector('.panel').innerHTML = win
     ? `<h1>★ VICTORY ★</h1><h2>The GLA stronghold has fallen, General.</h2>
        <p>Time: <b>${(state.t/60)|0}m ${(state.t%60)|0}s</b> · Waves survived: <b>${state.ai.wave}</b></p>
-       <button onclick="location.reload()">PLAY AGAIN</button>`
+       <button onclick="restartMatch()">PLAY AGAIN</button>`
     : `<h1 style="color:#ff6650">DEFEAT</h1><h2>Our forces have been eliminated.</h2>
        <p>You survived <b>${(state.t/60)|0}m ${(state.t%60)|0}s</b> and ${state.ai.wave} waves.</p>
-       <button onclick="location.reload()">TRY AGAIN</button>`;
+       <button onclick="restartMatch()">TRY AGAIN</button>`;
   if (win) { beep(523, .2, 'sine', .1); setTimeout(() => beep(659, .2, 'sine', .1), 200); setTimeout(() => beep(784, .4, 'sine', .1), 400); }
   else boom(0.35, 1.2);
 }
@@ -1104,7 +1265,20 @@ function handleTap(sx, sy) {
     return;
   }
   if (hit && hit.kind === 'bld' && hit.team === 'usa') {
-    /* if combat units are selected and tap own building — treat as select building */
+    /* workers selected: resume unfinished construction / repair damage; else select it */
+    const workers = state.sel.filter(u => u.d.builder || u.d.harvester);
+    if (!hit.built && workers.some(u => u.d.builder)) {
+      for (const w of workers) if (w.d.builder) orderResume(w, hit);
+      pingOrder(hit.x, hit.y, false);
+      toast('Resuming construction');
+      return;
+    }
+    if (hit.built && hit.hp < hit.maxhp && workers.length) {
+      for (const w of workers) orderRepair(w, hit);
+      pingOrder(hit.x, hit.y, false);
+      toast('Repairing ' + hit.d.name);
+      return;
+    }
     state.sel = []; state.selB = hit;
     beep(660, 0.06, 'sine', 0.05); rebuildBar();
     return;
@@ -1215,7 +1389,7 @@ function rebuildBar() {
       });
     }
     mkBtn('<div style="font-size:24px">✋</div><span>STOP</span>', '', () => {
-      for (const u of state.sel) { u.order = null; u.tgt = null; }
+      for (const u of state.sel) { u.order = null; u.tgt = null; u.site = null; u.detour = null; u.avoid = 0; u.idleT = -4; }
     });
   }
   const b = state.selB;
@@ -1317,15 +1491,43 @@ document.getElementById('btnStart').addEventListener('click', () => {
   toast('Select your Dozer and build a Supply Center, General');
 });
 
-genMap();
-renderTerrain();
+/* ============================== RESET / RESTART ============================== */
+function resetGame() {
+  state.money = 5000; state.t = 0; state.over = false;
+  state.units.length = 0; state.buildings.length = 0; state.piles.length = 0;
+  state.projs.length = 0; state.parts.length = 0; state.decos.length = 0;
+  state.sel = []; state.selB = null;
+  state.strikeCd = state.strikeMax; state.mode = null; state.ghost = null;
+  state.ai = { money: 2500, wave: 0, next: 80, think: 3 };
+  strikes.length = 0; ID = 1;
+  boxMode = false; boxRect = null; panStart = null; pinch = null; updToggle();
+  genMap();
+  renderTerrain();
+  state.cam.z = clamp(Math.min(VW, VH) / 520, 0.55, 1.0);
+  state.cam.x = 340; state.cam.y = WORLD - 340;
+  clampCam();
+  rebuildBar(); updHud(); updStrikeBtn();
+}
+window.restartMatch = () => {
+  resetGame();
+  started = true;
+  document.getElementById('overlay').style.display = 'none';
+  toast('Match restarted — good luck, General');
+};
+let restartArm = 0;
+document.getElementById('btnRestart').addEventListener('click', () => {
+  audioInit();
+  if (!started) return;
+  if (performance.now() - restartArm < 2600) { restartArm = 0; restartMatch(); }
+  else { restartArm = performance.now(); toast('Tap ⟳ again to restart the match'); }
+});
+window.addEventListener('keydown', e => {
+  if ((e.key === 'r' || e.key === 'R') && started) document.getElementById('btnRestart').click();
+});
+
+resetGame();
 /* data-URI SVGs decode async — redraw terrain once trees/rocks are ready */
 Promise.all(Object.values(ASSETS).map(i => i.decode ? i.decode().catch(() => {}) : 0)).then(renderTerrain);
-rebuildBar();
-updHud();
-state.cam.z = clamp(Math.min(VW, VH) / 520, 0.55, 1.0);
-state.cam.x = 340; state.cam.y = WORLD - 340;
-clampCam();
 requestAnimationFrame(frame);
 </script>
 </body>

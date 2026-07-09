@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Score Lodge — Archery Tracker</title>
+<style>
+  :root{
+    --wood-dark:#2b1d12;
+    --wood-mid:#4a3320;
+    --wood-light:#6b4a2c;
+    --plank:#3a2817;
+    --cream:#f0e2c4;
+    --cream-dim:#c9b791;
+    --ember:#e0762e;
+    --ember-hot:#ff9243;
+    --pine:#4a5d3a;
+    --pine-light:#6d8556;
+    --leather:#241a11;
+    --card-face:#1c130b;
+    --card-face-2:#120c06;
+    --serif:Georgia,"Times New Roman",serif;
+    --digits:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+  body{
+    min-height:100vh;
+    font-family:var(--serif);
+    color:var(--cream);
+    background:
+      /* soft cabin lamplight */
+      radial-gradient(1200px 500px at 50% -100px, rgba(255,170,80,.14), transparent 70%),
+      /* plank seams */
+      repeating-linear-gradient(180deg,
+        transparent 0 118px,
+        rgba(0,0,0,.45) 118px 121px,
+        rgba(255,220,160,.05) 121px 123px,
+        transparent 123px 240px,
+        rgba(0,0,0,.45) 240px 243px,
+        rgba(255,220,160,.05) 243px 245px),
+      /* grain streaks */
+      repeating-linear-gradient(88deg,
+        rgba(0,0,0,.12) 0 2px, transparent 2px 7px,
+        rgba(255,200,120,.03) 7px 9px, transparent 9px 23px),
+      linear-gradient(180deg,#33230f,#2a1c0d 40%,#221708);
+    padding:24px 16px 60px;
+  }
+
+  .lodge{max-width:1100px;margin:0 auto;}
+
+  /* ============ header ============ */
+  header{text-align:center;margin-bottom:26px;position:relative;}
+  .sign{
+    display:inline-block;
+    padding:18px 46px 20px;
+    background:
+      repeating-linear-gradient(92deg, rgba(0,0,0,.10) 0 3px, transparent 3px 11px),
+      linear-gradient(180deg,#7a5533,#5d3f22 60%,#4c3119);
+    border:3px solid #2a1a0b;
+    border-radius:10px;
+    box-shadow:
+      0 2px 0 rgba(255,220,160,.15) inset,
+      0 -6px 14px rgba(0,0,0,.35) inset,
+      0 12px 24px rgba(0,0,0,.55);
+    position:relative;
+  }
+  .sign::before,.sign::after{ /* nail heads */
+    content:"";position:absolute;top:10px;width:9px;height:9px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#c9c2b4,#5d574c 60%,#26221b);
+    box-shadow:0 1px 2px rgba(0,0,0,.7);
+  }
+  .sign::before{left:12px;} .sign::after{right:12px;}
+  .sign h1{
+    font-size:clamp(26px,5vw,40px);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--cream);
+    text-shadow:0 2px 0 rgba(0,0,0,.6),0 0 22px rgba(255,160,60,.25);
+    font-weight:700;
+  }
+  .sign .sub{
+    margin-top:4px;font-size:13px;letter-spacing:.34em;text-transform:uppercase;
+    color:var(--cream-dim);
+  }
+  .antlers{display:block;margin:0 auto 6px;width:120px;height:34px;opacity:.9;}
+
+  .session-banner{
+    margin:18px auto 0;font-size:14px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--ember-hot);text-shadow:0 0 12px rgba(224,118,46,.4);
+  }
+
+  /* ============ archer cards ============ */
+  .range{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:20px;
+  }
+  .archer{
+    background:
+      repeating-linear-gradient(180deg, rgba(0,0,0,.07) 0 4px, transparent 4px 13px),
+      linear-gradient(180deg,#54381e,#452d16 55%,#3b2612);
+    border:2px solid #201206;
+    border-radius:14px;
+    box-shadow:
+      0 2px 0 rgba(255,220,160,.14) inset,
+      0 -10px 22px rgba(0,0,0,.35) inset,
+      0 14px 28px rgba(0,0,0,.5);
+    padding:18px 16px 20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .archer::before{ /* rope trim */
+    content:"";position:absolute;inset:7px;border:2px dashed rgba(240,226,196,.16);
+    border-radius:9px;pointer-events:none;
+  }
+
+  .archer-name{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    margin-bottom:12px;
+  }
+  .archer-name h2{
+    font-size:22px;letter-spacing:.05em;color:var(--cream);
+    text-shadow:0 2px 0 rgba(0,0,0,.55);
+    max-width:75%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .rename{
+    background:none;border:none;cursor:pointer;font-size:15px;color:var(--cream-dim);
+    padding:4px;border-radius:6px;transition:color .2s, transform .2s;
+  }
+  .rename:hover{color:var(--ember-hot);transform:rotate(-12deg) scale(1.15);}
+
+  .label{
+    text-align:center;font-size:10.5px;letter-spacing:.30em;text-transform:uppercase;
+    color:var(--cream-dim);margin-bottom:7px;
+  }
+  .label .tally{color:var(--ember-hot);letter-spacing:.1em;}
+
+  /* ============ flip counters ============ */
+  .flip-counter{
+    display:flex;justify-content:center;gap:5px;
+    filter:drop-shadow(0 8px 10px rgba(0,0,0,.55));
+  }
+  .flip-counter.big{--dw:52px;--dh:76px;--dfs:52px;margin-bottom:16px;}
+  .flip-counter.small{--dw:30px;--dh:44px;--dfs:29px;margin-bottom:14px;}
+
+  .flip-digit{
+    position:relative;
+    width:var(--dw);height:var(--dh);
+    font-family:var(--digits);font-weight:700;font-size:var(--dfs);
+    font-variant-numeric:tabular-nums;
+    perspective:340px;
+    border-radius:7px;
+    background:#000;
+  }
+  .flip-digit::after{ /* hinge slot */
+    content:"";position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;
+    background:rgba(0,0,0,.85);z-index:10;border-radius:1px;
+    box-shadow:0 1px 0 rgba(255,235,200,.06);
+  }
+  .fd-half{
+    position:absolute;left:0;width:100%;height:50%;overflow:hidden;
+    color:var(--cream);
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+  }
+  .fd-half .fd-num{
+    position:absolute;left:0;width:100%;height:var(--dh);
+    line-height:var(--dh);text-align:center;
+    text-shadow:0 0 10px rgba(255,190,110,.18);
+  }
+  .fd-top{
+    top:0;border-radius:7px 7px 0 0;
+    background:linear-gradient(180deg,#2e2114,#241809);
+    box-shadow:0 1px 0 rgba(255,235,200,.10) inset;
+  }
+  .fd-top .fd-num{top:0;}
+  .fd-bottom{
+    bottom:0;border-radius:0 0 7px 7px;
+    background:linear-gradient(180deg,#1d1206,#150d04);
+    box-shadow:0 -1px 0 rgba(0,0,0,.6) inset,0 2px 0 rgba(0,0,0,.4) inset;
+  }
+  .fd-bottom .fd-num{top:-100%;}
+
+  .fd-flip-top,.fd-flip-bottom{z-index:5;}
+  .fd-flip-top{
+    top:0;border-radius:7px 7px 0 0;
+    background:linear-gradient(180deg,#2e2114,#241809);
+    transform-origin:center bottom;
+    animation:fdTop .32s ease-in forwards;
+  }
+  .fd-flip-top .fd-num{top:0;}
+  .fd-flip-top::before{ /* darkens as it folds */
+    content:"";position:absolute;inset:0;background:rgba(0,0,0,0);
+    animation:fdShadeTop .32s ease-in forwards;
+  }
+  .fd-flip-bottom{
+    bottom:0;border-radius:0 0 7px 7px;
+    background:linear-gradient(180deg,#1d1206,#150d04);
+    transform-origin:center top;
+    transform:rotateX(90deg);
+    animation:fdBottom .36s cubic-bezier(.34,1.45,.62,1) .30s forwards;
+  }
+  .fd-flip-bottom .fd-num{top:-100%;}
+  .fd-flip-bottom::before{ /* highlight sweep as it lands */
+    content:"";position:absolute;inset:0;background:rgba(255,225,170,.28);
+    animation:fdShadeBottom .36s ease-out .30s forwards;
+  }
+  @keyframes fdTop{to{transform:rotateX(-90deg);}}
+  @keyframes fdBottom{to{transform:rotateX(0deg);}}
+  @keyframes fdShadeTop{to{background:rgba(0,0,0,.55);}}
+  @keyframes fdShadeBottom{from{background:rgba(255,225,170,.28);}to{background:rgba(255,225,170,0);}}
+
+  .flip-digit.bump{animation:fdBump .38s ease;}
+  @keyframes fdBump{35%{transform:translateY(2px) scale(.985);}70%{transform:translateY(-1px);}}
+
+  /* ============ arrow buttons ============ */
+  .quiver{
+    display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:12px;
+  }
+  .arrow-btn{
+    font-family:var(--serif);font-size:16px;font-weight:700;
+    padding:10px 0;border-radius:8px;cursor:pointer;color:var(--cream);
+    background:linear-gradient(180deg,#5d7346,#425630 60%,#364826);
+    border:1px solid #1d2a12;
+    box-shadow:0 1px 0 rgba(255,255,255,.16) inset,0 3px 6px rgba(0,0,0,.45);
+    transition:transform .08s, filter .15s;
+    text-shadow:0 1px 0 rgba(0,0,0,.5);
+  }
+  .arrow-btn:hover{filter:brightness(1.18);}
+  .arrow-btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 1px 2px rgba(0,0,0,.45);}
+  .arrow-btn.gold{
+    background:linear-gradient(180deg,#e8a13c,#c97e22 60%,#a96317);
+    border-color:#5e3608;color:#fff8e8;
+  }
+  .arrow-btn.red{
+    background:linear-gradient(180deg,#b8552e,#95401f 60%,#7c3418);
+    border-color:#431a09;
+  }
+  .arrow-btn.miss{
+    background:linear-gradient(180deg,#4c4238,#3a322a 60%,#2e2720);
+    border-color:#17120d;color:var(--cream-dim);
+  }
+
+  .card-foot{
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    font-size:12.5px;color:var(--cream-dim);letter-spacing:.06em;
+  }
+  .undo{
+    font-family:var(--serif);font-size:12.5px;letter-spacing:.06em;
+    background:none;border:1px solid rgba(240,226,196,.3);color:var(--cream-dim);
+    border-radius:7px;padding:6px 12px;cursor:pointer;transition:all .2s;
+  }
+  .undo:hover{color:var(--cream);border-color:var(--ember);background:rgba(224,118,46,.12);}
+  .undo:disabled{opacity:.35;cursor:default;background:none;border-color:rgba(240,226,196,.3);color:var(--cream-dim);}
+
+  /* ============ campfire controls ============ */
+  .controls{display:flex;justify-content:center;gap:14px;margin:30px 0 26px;flex-wrap:wrap;}
+  .big-btn{
+    font-family:var(--serif);font-size:17px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:#fff6e6;cursor:pointer;
+    padding:14px 34px;border-radius:10px;
+    background:linear-gradient(180deg,var(--ember-hot),var(--ember) 55%,#b4571d);
+    border:2px solid #6e3208;
+    box-shadow:0 2px 0 rgba(255,255,255,.25) inset,0 8px 18px rgba(224,118,46,.35),0 6px 12px rgba(0,0,0,.5);
+    text-shadow:0 1px 2px rgba(0,0,0,.5);
+    transition:transform .1s, filter .2s;
+  }
+  .big-btn:hover{filter:brightness(1.1);}
+  .big-btn:active{transform:translateY(2px);}
+  .big-btn.ghost{
+    background:linear-gradient(180deg,#4c4238,#38302a);
+    border-color:#1c1712;box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 5px 10px rgba(0,0,0,.45);
+    color:var(--cream-dim);font-size:13px;padding:12px 22px;
+  }
+  .big-btn.ghost:hover{color:var(--cream);}
+
+  /* ============ log book ============ */
+  .logbook{
+    background:
+      repeating-linear-gradient(180deg, rgba(0,0,0,.06) 0 3px, transparent 3px 12px),
+      linear-gradient(180deg,#4a3018,#3c2712);
+    border:2px solid #1e1005;border-radius:14px;
+    box-shadow:0 2px 0 rgba(255,220,160,.12) inset,0 12px 24px rgba(0,0,0,.5);
+    padding:20px 22px;
+  }
+  .logbook h3{
+    text-align:center;font-size:14px;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--cream-dim);margin-bottom:14px;
+  }
+  .logbook table{width:100%;border-collapse:collapse;font-size:14.5px;}
+  .logbook th{
+    font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--cream-dim);
+    text-align:left;padding:6px 8px;border-bottom:1px solid rgba(240,226,196,.2);
+    font-weight:400;
+  }
+  .logbook th.num,.logbook td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .logbook td{padding:8px;border-bottom:1px dashed rgba(240,226,196,.12);color:var(--cream);}
+  .logbook tr.total-row td{
+    border-bottom:none;border-top:2px solid rgba(240,226,196,.3);
+    color:var(--ember-hot);font-weight:700;padding-top:10px;
+  }
+  .logbook .best{color:var(--ember-hot);}
+  .empty-log{text-align:center;color:var(--cream-dim);font-style:italic;padding:10px 0 4px;}
+
+  footer{
+    text-align:center;margin-top:26px;font-size:12px;letter-spacing:.14em;
+    color:rgba(240,226,196,.4);text-transform:uppercase;
+  }
+
+  /* fresh-session row flash */
+  @keyframes logFlash{from{background:rgba(224,118,46,.25);}to{background:transparent;}}
+  tr.fresh td{animation:logFlash 1.6s ease-out;}
+
+  @media (max-width:700px){
+    .flip-counter.big{--dw:46px;--dh:68px;--dfs:46px;}
+    .sign{padding:14px 28px 16px;}
+  }
+</style>
+</head>
+<body>
+<div class="lodge">
+
+  <header>
+    <div class="sign">
+      <svg class="antlers" viewBox="0 0 120 34" fill="none" stroke="#f0e2c4" stroke-width="2.4" stroke-linecap="round" opacity=".85">
+        <path d="M60 30 C60 18 52 14 44 12 M48 15 C46 9 47 5 50 2 M44 12 C36 12 30 8 28 2 M38 13 C33 17 26 17 20 14"/>
+        <path d="M60 30 C60 18 68 14 76 12 M72 15 C74 9 73 5 70 2 M76 12 C84 12 90 8 92 2 M82 13 C87 17 94 17 100 14"/>
+        <circle cx="60" cy="31" r="2.2" fill="#f0e2c4" stroke="none"/>
+      </svg>
+      <h1>The Score Lodge</h1>
+      <div class="sub">Backwoods Archery Tracker</div>
+    </div>
+    <div class="session-banner" id="sessionBanner">Session 1 &mdash; Nock your arrows</div>
+  </header>
+
+  <main class="range" id="range"><!-- archer cards injected here --></main>
+
+  <div class="controls">
+    <button class="big-btn" id="finishBtn">&#128293; Finish Session</button>
+    <button class="big-btn ghost" id="resetBtn">Burn the Logbook</button>
+  </div>
+
+  <section class="logbook">
+    <h3>&#127794; Lodge Logbook &#127794;</h3>
+    <div id="logbookBody"></div>
+  </section>
+
+  <footer>Scores stay saved on this device &mdash; even after you close the cabin door.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- storage ---------------- */
+  var KEY = "score-lodge-v1";
+  var state = load();
+
+  function defaultState(){
+    return {
+      names:["Hunter 1","Hunter 2","Hunter 3"],
+      current:[[],[],[]],            // arrow values for the in-progress session
+      history:[]                     // {date:"...", scores:[a,b,c]}
+    };
+  }
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return defaultState();
+      var s = JSON.parse(raw);
+      if(!s || !Array.isArray(s.names) || s.names.length!==3) return defaultState();
+      if(!Array.isArray(s.current) || s.current.length!==3) s.current=[[],[],[]];
+      if(!Array.isArray(s.history)) s.history=[];
+      return s;
+    }catch(e){ return defaultState(); }
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  function sum(arr){ var t=0; for(var i=0;i<arr.length;i++) t+=arr[i]; return t; }
+  function sessionScore(i){ return sum(state.current[i]); }
+  function historyTotal(i){
+    var t=0;
+    for(var h=0;h<state.history.length;h++) t+=state.history[h].scores[i];
+    return t;
+  }
+  function rollingTotal(i){ return historyTotal(i)+sessionScore(i); }
+
+  /* ---------------- flip digits ---------------- */
+  function FlipDigit(parent){
+    this.el = document.createElement("div");
+    this.el.className = "flip-digit";
+    this.el.innerHTML =
+      '<div class="fd-half fd-top"><div class="fd-num">0</div></div>'+
+      '<div class="fd-half fd-bottom"><div class="fd-num">0</div></div>';
+    this.top = this.el.children[0].firstChild;
+    this.bottom = this.el.children[1].firstChild;
+    this.value = "0";
+    this._temps = [];
+    parent.appendChild(this.el);
+  }
+  FlipDigit.prototype.set = function(v, animate){
+    v = String(v);
+    if(v === this.value) return;
+    var old = this.value;
+    this.value = v;
+    if(!animate){
+      this.top.textContent = v;
+      this.bottom.textContent = v;
+      return;
+    }
+    // clear any in-flight flip so rapid taps stay clean
+    for(var i=0;i<this._temps.length;i++){
+      if(this._temps[i].parentNode) this._temps[i].parentNode.removeChild(this._temps[i]);
+    }
+    this._temps.length = 0;
+
+    var flipTop = document.createElement("div");
+    flipTop.className = "fd-half fd-flip-top";
+    flipTop.innerHTML = '<div class="fd-num">'+old+'</div>';
+
+    var flipBottom = document.createElement("div");
+    flipBottom.className = "fd-half fd-flip-bottom";
+    flipBottom.innerHTML = '<div class="fd-num">'+v+'</div>';
+
+    // new number waits behind the folding flap
+    this.top.textContent = v;
+
+    this.el.appendChild(flipTop);
+    this.el.appendChild(flipBottom);
+    this._temps.push(flipTop, flipBottom);
+
+    var self = this;
+    flipBottom.addEventListener("animationend", function done(){
+      flipBottom.removeEventListener("animationend", done);
+      self.bottom.textContent = self.value;
+      if(flipTop.parentNode) flipTop.parentNode.removeChild(flipTop);
+      if(flipBottom.parentNode) flipBottom.parentNode.removeChild(flipBottom);
+      var k = self._temps.indexOf(flipTop); if(k>-1) self._temps.splice(k,1);
+      k = self._temps.indexOf(flipBottom); if(k>-1) self._temps.splice(k,1);
+    });
+
+    this.el.classList.remove("bump");
+    void this.el.offsetWidth;
+    this.el.classList.add("bump");
+  };
+
+  function FlipCounter(parent, digits, cssClass){
+    this.el = document.createElement("div");
+    this.el.className = "flip-counter "+cssClass;
+    this.digits = [];
+    for(var i=0;i<digits;i++) this.digits.push(new FlipDigit(this.el));
+    parent.appendChild(this.el);
+    this._value = 0;
+  }
+  FlipCounter.prototype.set = function(value, animate){
+    this._value = value;
+    var str = String(Math.max(0, Math.floor(value)));
+    // grow if the score outruns the dial
+    while(str.length > this.digits.length){
+      var d = new FlipDigit(this.el);
+      this.el.insertBefore(d.el, this.el.firstChild);
+      this.digits.unshift(d);
+    }
+    while(str.length < this.digits.length) str = "0"+str;
+    for(var i=0;i<str.length;i++){
+      var ch = str.charAt(i);
+      var digit = this.digits[i];
+      if(digit.value !== ch){
+        (function(dg, c, delay, anim){
+          if(anim && delay>0) setTimeout(function(){ dg.set(c, true); }, delay);
+          else dg.set(c, anim);
+        })(digit, ch, (str.length-1-i)*55, animate);
+      }
+    }
+  };
+
+  /* ---------------- build cards ---------------- */
+  var ARROWS = [
+    {label:"X",  val:10, cls:"gold"},
+    {label:"10", val:10, cls:"gold"},
+    {label:"9",  val:9,  cls:"gold"},
+    {label:"8",  val:8,  cls:"red"},
+    {label:"7",  val:7,  cls:"red"},
+    {label:"6",  val:6,  cls:""},
+    {label:"5",  val:5,  cls:""},
+    {label:"4",  val:4,  cls:""},
+    {label:"3",  val:3,  cls:""},
+    {label:"2",  val:2,  cls:""},
+    {label:"1",  val:1,  cls:""},
+    {label:"Miss", val:0, cls:"miss"}
+  ];
+
+  var range = document.getElementById("range");
+  var cards = [];
+
+  for(var a=0;a<3;a++){
+    (function(idx){
+      var card = document.createElement("section");
+      card.className = "archer";
+
+      var nameRow = document.createElement("div");
+      nameRow.className = "archer-name";
+      var h2 = document.createElement("h2");
+      h2.textContent = state.names[idx];
+      var renameBtn = document.createElement("button");
+      renameBtn.className = "rename";
+      renameBtn.title = "Rename archer";
+      renameBtn.innerHTML = "&#9998;";
+      renameBtn.addEventListener("click", function(){
+        var n = prompt("Carve a new name into the plaque:", state.names[idx]);
+        if(n && n.trim()){
+          state.names[idx] = n.trim().slice(0,20);
+          h2.textContent = state.names[idx];
+          save(); renderLog();
+        }
+      });
+      nameRow.appendChild(h2);
+      nameRow.appendChild(renameBtn);
+      card.appendChild(nameRow);
+
+      var lbl1 = document.createElement("div");
+      lbl1.className = "label";
+      lbl1.textContent = "This Session";
+      card.appendChild(lbl1);
+      var big = new FlipCounter(card, 3, "big");
+
+      var lbl2 = document.createElement("div");
+      lbl2.className = "label";
+      lbl2.innerHTML = 'Rolling Total &mdash; All Hunts';
+      card.appendChild(lbl2);
+      var small = new FlipCounter(card, 4, "small");
+
+      var quiver = document.createElement("div");
+      quiver.className = "quiver";
+      ARROWS.forEach(function(ar){
+        var b = document.createElement("button");
+        b.className = "arrow-btn "+ar.cls;
+        b.textContent = ar.label;
+        b.addEventListener("click", function(){
+          state.current[idx].push(ar.val);
+          save();
+          refreshCard(idx, true);
+        });
+        quiver.appendChild(b);
+      });
+      card.appendChild(quiver);
+
+      var foot = document.createElement("div");
+      foot.className = "card-foot";
+      var arrowCount = document.createElement("span");
+      var undo = document.createElement("button");
+      undo.className = "undo";
+      undo.innerHTML = "&#8617; Undo arrow";
+      undo.addEventListener("click", function(){
+        if(state.current[idx].length){
+          state.current[idx].pop();
+          save();
+          refreshCard(idx, true);
+        }
+      });
+      foot.appendChild(arrowCount);
+      foot.appendChild(undo);
+      card.appendChild(foot);
+
+      range.appendChild(card);
+      cards.push({big:big, small:small, arrowCount:arrowCount, undo:undo});
+    })(a);
+  }
+
+  function refreshCard(i, animate){
+    var c = cards[i];
+    c.big.set(sessionScore(i), animate);
+    c.small.set(rollingTotal(i), animate);
+    var n = state.current[i].length;
+    c.arrowCount.textContent = n+" arrow"+(n===1?"":"s")+" loosed";
+    c.undo.disabled = n===0;
+  }
+
+  /* ---------------- session banner + logbook ---------------- */
+  var banner = document.getElementById("sessionBanner");
+  function renderBanner(){
+    banner.innerHTML = "Session "+(state.history.length+1)+" &mdash; Nock your arrows";
+  }
+
+  var logBody = document.getElementById("logbookBody");
+  function renderLog(freshIndex){
+    if(!state.history.length){
+      logBody.innerHTML = '<div class="empty-log">No hunts recorded yet. Finish a session to carve it in.</div>';
+      return;
+    }
+    var html = '<table><thead><tr><th>Hunt</th><th>Date</th>';
+    for(var i=0;i<3;i++) html += '<th class="num">'+esc(state.names[i])+'</th>';
+    html += '</tr></thead><tbody>';
+    for(var h=state.history.length-1; h>=0; h--){
+      var s = state.history[h];
+      var best = Math.max(s.scores[0], s.scores[1], s.scores[2]);
+      html += '<tr'+(h===freshIndex?' class="fresh"':'')+'><td>#'+(h+1)+'</td><td>'+esc(s.date)+'</td>';
+      for(var j=0;j<3;j++){
+        var cls = (s.scores[j]===best && best>0) ? "num best" : "num";
+        html += '<td class="'+cls+'">'+s.scores[j]+'</td>';
+      }
+      html += '</tr>';
+    }
+    html += '<tr class="total-row"><td colspan="2">Rolling Total</td>';
+    for(var k=0;k<3;k++) html += '<td class="num">'+historyTotal(k)+'</td>';
+    html += '</tr></tbody></table>';
+    logBody.innerHTML = html;
+  }
+  function esc(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  /* ---------------- controls ---------------- */
+  document.getElementById("finishBtn").addEventListener("click", function(){
+    var any = state.current[0].length || state.current[1].length || state.current[2].length;
+    if(!any){ alert("No arrows loosed yet — nothing to log."); return; }
+    var d = new Date();
+    state.history.push({
+      date: d.toLocaleDateString(undefined,{month:"short",day:"numeric"}) +
+            " " + d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}),
+      scores:[sessionScore(0), sessionScore(1), sessionScore(2)]
+    });
+    state.current = [[],[],[]];
+    save();
+    for(var i=0;i<3;i++) refreshCard(i, true);
+    renderBanner();
+    renderLog(state.history.length-1);
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", function(){
+    if(confirm("Burn the logbook? All sessions, totals and names go up in smoke.")){
+      state = defaultState();
+      save();
+      location.reload();
+    }
+  });
+
+  /* ---------------- first paint ---------------- */
+  for(var i0=0;i0<3;i0++) refreshCard(i0, false);
+  renderBanner();
+  renderLog();
+})();
+</script>
+</body>
+</html>

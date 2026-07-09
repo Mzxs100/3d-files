@@ -283,6 +283,7 @@
     border:2px solid #1e1005;border-radius:14px;
     box-shadow:0 2px 0 rgba(255,220,160,.12) inset,0 12px 24px rgba(0,0,0,.5);
     padding:20px 22px;
+    margin-bottom:16px;
   }
   .logbook h3{
     text-align:center;font-size:14px;letter-spacing:.3em;text-transform:uppercase;
@@ -301,7 +302,74 @@
     color:var(--ember-hot);font-weight:700;padding-top:10px;
   }
   .logbook .best{color:var(--ember-hot);}
+  .logbook td.sat{color:rgba(240,226,196,.32);font-weight:700;}
   .empty-log{text-align:center;color:var(--cream-dim);font-style:italic;padding:10px 0 4px;}
+
+  .logbook tr.hunt-row{cursor:pointer;}
+  .logbook tr.hunt-row:hover td{background:rgba(255,200,120,.06);}
+  .logbook tr.hunt-row.open td{background:rgba(0,0,0,.2);border-bottom:none;}
+  .hint{
+    text-align:center;font-size:11px;color:rgba(240,226,196,.45);
+    letter-spacing:.08em;margin-top:10px;font-style:italic;
+  }
+
+  /* session detail (expanded row) */
+  tr.detail-row td{
+    background:rgba(0,0,0,.2);padding:4px 12px 14px;
+    border-bottom:1px solid rgba(240,226,196,.3);
+  }
+  .d-line{
+    padding:7px 0 6px;border-bottom:1px dashed rgba(240,226,196,.12);
+    font-size:14px;line-height:1.55;color:var(--cream);
+  }
+  .d-line:last-of-type{border-bottom:none;}
+  .d-line .sat-out{color:var(--cream-dim);font-style:italic;}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
+  .chip{
+    font-family:var(--digits);font-size:12.5px;font-weight:700;
+    min-width:26px;height:26px;line-height:24px;text-align:center;
+    border-radius:6px;border:1px solid rgba(0,0,0,.55);
+    background:#efe6cf;color:#181008;padding:0 4px;
+  }
+  .chip.c-gold{background:#e8a13c;}
+  .chip.c-red{background:#b8552e;color:#fff;}
+  .chip.c-blue{background:#3b6ea5;color:#fff;}
+  .chip.c-black{background:#1c130b;color:#f0e2c4;border-color:rgba(240,226,196,.3);}
+  .chip.c-miss{background:#595044;color:#e8ddc4;}
+  .del-session{
+    display:block;margin:12px auto 2px;
+    font-family:var(--serif);font-size:13px;letter-spacing:.04em;
+    background:none;border:1px solid #c25b3a;color:#e0876a;
+    border-radius:8px;padding:8px 16px;cursor:pointer;transition:all .2s;
+  }
+  .del-session:hover{background:rgba(194,91,58,.15);color:#ffb397;}
+
+  /* add past session form */
+  .add-form{
+    margin-top:16px;padding:14px 12px;
+    border:2px dashed rgba(240,226,196,.35);border-radius:10px;
+    background:rgba(0,0,0,.15);
+  }
+  .add-form .af-title{
+    font-size:11px;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--cream-dim);text-align:center;margin-bottom:11px;
+  }
+  .af-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin-bottom:8px;
+  }
+  .af-row label{
+    font-size:15px;color:var(--cream);flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .af-row input{
+    width:150px;min-height:42px;font-family:var(--digits);font-size:17px;
+    font-weight:700;text-align:center;border:2px solid #1d1206;border-radius:8px;
+    background:#efe6cf;color:#181008;padding:4px 8px;
+  }
+  .af-row input::placeholder{color:rgba(24,16,8,.4);font-size:13px;font-weight:700;}
+  .af-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px;}
+  .af-actions .big-btn{font-size:14px;padding:12px 10px;}
 
   footer{
     text-align:center;margin-top:26px;font-size:12px;letter-spacing:.14em;
@@ -338,12 +406,29 @@
 
   <div class="controls">
     <button class="big-btn" id="finishBtn">&#128293; Finish Session</button>
+    <button class="big-btn ghost" id="addBtn">&#10133; Add Past Session</button>
     <button class="big-btn ghost" id="resetBtn">Burn the Logbook</button>
   </div>
 
   <section class="logbook">
     <h3>&#127794; Lodge Logbook &#127794;</h3>
     <div id="logbookBody"></div>
+    <div class="add-form" id="addForm" hidden>
+      <div class="af-title">Add a Past Session</div>
+      <div class="af-row"><label for="afDate">Date</label><input type="date" id="afDate"></div>
+      <div class="af-row"><label id="afL0" for="af0"></label><input type="number" id="af0" inputmode="numeric" min="0" placeholder="sat out"></div>
+      <div class="af-row"><label id="afL1" for="af1"></label><input type="number" id="af1" inputmode="numeric" min="0" placeholder="sat out"></div>
+      <div class="af-row"><label id="afL2" for="af2"></label><input type="number" id="af2" inputmode="numeric" min="0" placeholder="sat out"></div>
+      <div class="af-actions">
+        <button class="big-btn" id="afSave">Save Hunt</button>
+        <button class="big-btn ghost" id="afCancel">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="logbook">
+    <h3>&#127993; Head to Head &#127993;</h3>
+    <div id="statsBody"></div>
   </section>
 
   <footer>Scores stay saved on this device &mdash; even after you close the cabin door.</footer>
@@ -387,6 +472,16 @@
     return t;
   }
   function rollingTotal(i){ return historyTotal(i)+sessionScore(i); }
+  /* entries logged before participation tracking count everyone as shooting */
+  function shotIn(entry, i){ return entry.shot ? !!entry.shot[i] : true; }
+  function chipClass(v){
+    if(v>=9) return "c-gold";
+    if(v>=7) return "c-red";
+    if(v>=5) return "c-blue";
+    if(v>=3) return "c-black";
+    if(v>=1) return "";
+    return "c-miss";
+  }
 
   /* ---------------- flip digits ---------------- */
   function FlipDigit(parent){
@@ -514,7 +609,7 @@
         if(n && n.trim()){
           state.names[idx] = n.trim().slice(0,20);
           h2.textContent = state.names[idx];
-          save(); renderLog();
+          save(); renderLog(); renderStats(); syncAddFormNames();
         }
       });
       nameRow.appendChild(h2);
@@ -586,9 +681,11 @@
   }
 
   var logBody = document.getElementById("logbookBody");
+  var expandedH = -1;   // which logbook hunt is expanded
+
   function renderLog(freshIndex){
     if(!state.history.length){
-      logBody.innerHTML = '<div class="empty-log">No hunts recorded yet. Finish a session to carve it in.</div>';
+      logBody.innerHTML = '<div class="empty-log">No hunts recorded yet. Finish a session or add a past one.</div>';
       return;
     }
     var html = '<table><thead><tr><th>Hunt</th><th>Date</th>';
@@ -596,38 +693,207 @@
     html += '</tr></thead><tbody>';
     for(var h=state.history.length-1; h>=0; h--){
       var s = state.history[h];
-      var best = Math.max(s.scores[0], s.scores[1], s.scores[2]);
-      html += '<tr'+(h===freshIndex?' class="fresh"':'')+'><td>#'+(h+1)+'</td><td>'+esc(s.date)+'</td>';
+      var best = -1;
+      for(var b2=0;b2<3;b2++) if(shotIn(s,b2) && s.scores[b2]>best) best = s.scores[b2];
+      var rowCls = "hunt-row" + (h===freshIndex?" fresh":"") + (h===expandedH?" open":"");
+      html += '<tr class="'+rowCls+'" data-h="'+h+'"><td>#'+(h+1)+'</td><td>'+esc(s.date)+'</td>';
       for(var j=0;j<3;j++){
-        var cls = (s.scores[j]===best && best>0) ? "num best" : "num";
-        html += '<td class="'+cls+'">'+s.scores[j]+'</td>';
+        if(!shotIn(s,j)){
+          html += '<td class="num sat">&mdash;</td>';
+        }else{
+          var cls = (s.scores[j]===best && best>0) ? "num best" : "num";
+          html += '<td class="'+cls+'">'+s.scores[j]+'</td>';
+        }
       }
       html += '</tr>';
+      if(h===expandedH) html += detailRow(h);
     }
     html += '<tr class="total-row"><td colspan="2">Rolling Total</td>';
     for(var k=0;k<3;k++) html += '<td class="num">'+historyTotal(k)+'</td>';
     html += '</tr></tbody></table>';
+    html += '<div class="hint">Click a hunt to see its details</div>';
     logBody.innerHTML = html;
   }
+
+  function detailRow(h){
+    var s = state.history[h];
+    var html = '<tr class="detail-row"><td colspan="5">';
+    for(var i=0;i<3;i++){
+      html += '<div class="d-line"><b>'+esc(state.names[i])+'</b> &mdash; ';
+      if(!shotIn(s,i)){
+        html += '<span class="sat-out">sat this one out</span>';
+      }else{
+        html += '<span>'+s.scores[i]+' pts</span>';
+        var arrows = (s.arrows && s.arrows[i]) ? s.arrows[i] : null;
+        if(arrows && arrows.length){
+          var avg = (s.scores[i]/arrows.length).toFixed(1);
+          html += ' &middot; '+arrows.length+' arrow'+(arrows.length===1?'':'s')+' &middot; avg '+avg;
+          html += '<div class="chips">';
+          for(var a=0;a<arrows.length;a++){
+            var v = arrows[a];
+            html += '<span class="chip '+chipClass(v)+'">'+(v===0?'M':v)+'</span>';
+          }
+          html += '</div>';
+        }
+      }
+      html += '</div>';
+    }
+    html += '<button class="del-session" data-h="'+h+'">&#128465; Delete this hunt</button>';
+    html += '</td></tr>';
+    return html;
+  }
+
+  /* one delegated listener survives every re-render */
+  logBody.addEventListener("click", function(ev){
+    var del = ev.target.closest(".del-session");
+    if(del){
+      var hd = parseInt(del.getAttribute("data-h"), 10);
+      var entry = state.history[hd];
+      if(entry && confirm("Delete hunt #"+(hd+1)+" ("+entry.date+")? Its points come off the rolling totals.")){
+        state.history.splice(hd, 1);
+        expandedH = -1;
+        save();
+        for(var i=0;i<3;i++) refreshCard(i, true);
+        renderBanner();
+        renderLog();
+        renderStats();
+      }
+      return;
+    }
+    var row = ev.target.closest("tr.hunt-row");
+    if(row){
+      var h = parseInt(row.getAttribute("data-h"), 10);
+      expandedH = (expandedH===h) ? -1 : h;
+      renderLog();
+    }
+  });
+
   function esc(s){
     return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   }
+
+  /* ---------------- head to head stats ---------------- */
+  var statsBody = document.getElementById("statsBody");
+  function renderStats(){
+    if(!state.history.length){
+      statsBody.innerHTML = '<div class="empty-log">Stats appear once a hunt is logged.</div>';
+      return;
+    }
+    var rows = [];
+    var bestAvg = -1;
+    for(var i=0;i<3;i++){
+      var hunts=0, best=0;
+      for(var h=0;h<state.history.length;h++){
+        var s = state.history[h];
+        if(shotIn(s,i)){
+          hunts++;
+          if(s.scores[i]>best) best = s.scores[i];
+        }
+      }
+      var total = historyTotal(i);
+      var avg = hunts ? total/hunts : 0;
+      if(hunts && avg>bestAvg) bestAvg = avg;
+      rows.push({hunts:hunts, total:total, avg:avg, best:best});
+    }
+    var html = '<table><thead><tr><th>Archer</th><th class="num">Hunts</th><th class="num">Points</th><th class="num">Avg/Hunt</th><th class="num">Best</th></tr></thead><tbody>';
+    for(var r=0;r<3;r++){
+      var d = rows[r];
+      var lead = (d.hunts && d.avg===bestAvg && bestAvg>0);
+      html += '<tr>'+
+        '<td>'+(lead?'&#127942; ':'')+esc(state.names[r])+'</td>'+
+        '<td class="num">'+d.hunts+'</td>'+
+        '<td class="num">'+d.total+'</td>'+
+        '<td class="num'+(lead?' best':'')+'">'+(d.hunts?d.avg.toFixed(1):'&mdash;')+'</td>'+
+        '<td class="num">'+(d.hunts?d.best:'&mdash;')+'</td>'+
+      '</tr>';
+    }
+    html += '</tbody></table>';
+    html += '<div class="hint">Avg/Hunt only counts hunts each archer shot &mdash; fair even when someone sits out</div>';
+    statsBody.innerHTML = html;
+  }
+
+  /* ---------------- add past session ---------------- */
+  var addForm = document.getElementById("addForm");
+  var addBtn = document.getElementById("addBtn");
+  var afInputs = [document.getElementById("af0"), document.getElementById("af1"), document.getElementById("af2")];
+  var afDate = document.getElementById("afDate");
+
+  function syncAddFormNames(){
+    for(var i=0;i<3;i++) document.getElementById("afL"+i).textContent = state.names[i];
+  }
+  function todayISO(){
+    var d = new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  addBtn.addEventListener("click", function(){
+    var show = addForm.hidden;
+    addForm.hidden = !show;
+    if(show){
+      syncAddFormNames();
+      afDate.value = todayISO();
+      for(var i=0;i<3;i++) afInputs[i].value = "";
+      addForm.scrollIntoView({behavior:"smooth", block:"center"});
+    }
+  });
+  document.getElementById("afCancel").addEventListener("click", function(){
+    addForm.hidden = true;
+  });
+  document.getElementById("afSave").addEventListener("click", function(){
+    var scores=[], shot=[], any=false;
+    for(var i=0;i<3;i++){
+      var raw = afInputs[i].value.trim();
+      if(raw===""){
+        scores.push(0); shot.push(false);
+      }else{
+        var v = parseInt(raw, 10);
+        if(isNaN(v) || v<0){ alert("Score for "+state.names[i]+" must be 0 or more."); return; }
+        scores.push(v); shot.push(true); any=true;
+      }
+    }
+    if(!any){ alert("Enter a score for at least one archer — blank means they sat out."); return; }
+    var dateStr;
+    if(afDate.value){
+      var d = new Date(afDate.value+"T12:00:00");
+      var opts = {month:"short", day:"numeric"};
+      if(d.getFullYear() !== new Date().getFullYear()) opts.year = "numeric";
+      dateStr = d.toLocaleDateString(undefined, opts);
+    }else{
+      dateStr = new Date().toLocaleDateString(undefined,{month:"short",day:"numeric"});
+    }
+    state.history.push({date:dateStr, scores:scores, shot:shot, arrows:null});
+    addForm.hidden = true;
+    expandedH = -1;
+    save();
+    for(var c=0;c<3;c++) refreshCard(c, true);
+    renderBanner();
+    renderLog(state.history.length-1);
+    renderStats();
+  });
 
   /* ---------------- controls ---------------- */
   document.getElementById("finishBtn").addEventListener("click", function(){
     var any = state.current[0].length || state.current[1].length || state.current[2].length;
     if(!any){ alert("No arrows loosed yet — nothing to log."); return; }
     var d = new Date();
+    var shot = [], arrows = [];
+    for(var s0=0;s0<3;s0++){
+      shot.push(state.current[s0].length>0);
+      arrows.push(state.current[s0].slice());
+    }
     state.history.push({
       date: d.toLocaleDateString(undefined,{month:"short",day:"numeric"}) +
             " " + d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}),
-      scores:[sessionScore(0), sessionScore(1), sessionScore(2)]
+      scores:[sessionScore(0), sessionScore(1), sessionScore(2)],
+      shot: shot,
+      arrows: arrows
     });
     state.current = [[],[],[]];
+    expandedH = -1;
     save();
     for(var i=0;i<3;i++) refreshCard(i, true);
     renderBanner();
     renderLog(state.history.length-1);
+    renderStats();
   });
 
   document.getElementById("resetBtn").addEventListener("click", function(){
@@ -642,6 +908,8 @@
   for(var i0=0;i0<3;i0++) refreshCard(i0, false);
   renderBanner();
   renderLog();
+  renderStats();
+  syncAddFormNames();
 })();
 </script>
 </body>

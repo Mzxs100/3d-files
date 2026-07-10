@@ -83,7 +83,10 @@
     font-family:var(--digits);font-size:24px;font-weight:800;
     font-variant-numeric:tabular-nums;line-height:1.1;
   }
-  .tab .t-sub{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;opacity:.75;}
+  .tab .t-sub{
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;opacity:.8;
+    font-variant-numeric:tabular-nums;white-space:nowrap;
+  }
   .tab.active{
     background:var(--pine);color:#fff;border-color:var(--pine-dark);
     box-shadow:0 3px 0 var(--pine-dark);
@@ -513,7 +516,7 @@
       b.innerHTML =
         '<span class="t-name"></span>'+
         '<span class="t-score">0</span>'+
-        '<span class="t-sub">total</span>';
+        '<span class="t-sub"></span>';
       b.addEventListener("click", function(){
         if(active !== idx){
           active = idx;
@@ -531,7 +534,9 @@
       var b = tabRefs[i];
       b.classList.toggle("active", i===active);
       b.querySelector(".t-name").textContent = state.names[i];
-      b.querySelector(".t-score").textContent = rollingTotal(i);
+      /* big number = this session (resets on finish); small line = all-time */
+      b.querySelector(".t-score").textContent = sessionScore(i);
+      b.querySelector(".t-sub").textContent = "total "+rollingTotal(i);
     }
   }
 

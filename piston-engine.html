@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Four-Stroke Piston Engine — Cross-Section Animation</title>
+<style>
+  :root {
+    --bg: #0e1319;
+    --panel: #141b23;
+    --ink: #e8edf2;
+    --muted: #8b98a5;
+    --line: #2a3340;
+    --intake: #4da3ff;
+    --compression: #9fd0ff;
+    --power: #ff9f2e;
+    --exhaust: #a9b0b8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(1200px 700px at 50% -10%, #17202b 0%, var(--bg) 60%);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+  }
+  .wrap {
+    width: min(680px, 100%);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px 22px 20px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.45);
+  }
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  h1 { font-size: 18px; font-weight: 650; letter-spacing: .2px; }
+  h1 span { color: var(--muted); font-weight: 450; }
+  #strokeLabel {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #strokeDot { width: 10px; height: 10px; border-radius: 50%; background: var(--intake); }
+  svg { width: 100%; height: auto; display: block; }
+
+  .strokebar {
+    display: flex;
+    position: relative;
+    height: 34px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    margin: 10px 0 14px;
+    user-select: none;
+  }
+  .strokebar .seg {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: .1em;
+    color: #0c1116;
+    opacity: .38;
+    transition: opacity .15s linear;
+  }
+  .strokebar .seg.active { opacity: 1; }
+  .seg.s0 { background: var(--intake); }
+  .seg.s1 { background: var(--compression); }
+  .seg.s2 { background: var(--power); }
+  .seg.s3 { background: var(--exhaust); }
+  #barMarker {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 3px;
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255,255,255,.9);
+    pointer-events: none;
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  button {
+    background: #1d2733;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 84px;
+  }
+  button:hover { background: #263242; }
+  input[type=range] { flex: 1; accent-color: var(--power); }
+  #speedVal { min-width: 46px; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Four-Stroke Engine <span>· cross-section</span></h1>
+    <div id="strokeLabel"><div id="strokeDot"></div><span id="strokeName">INTAKE</span></div>
+  </header>
+
+  <svg id="scene" viewBox="0 0 600 656" aria-label="Animated cross-section of a four-stroke piston engine">
+    <defs>
+      <linearGradient id="wallGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#3a4552"/>
+        <stop offset=".5" stop-color="#5b6874"/>
+        <stop offset="1" stop-color="#2c343e"/>
+      </linearGradient>
+      <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#46525f"/>
+        <stop offset="1" stop-color="#333d48"/>
+      </linearGradient>
+      <linearGradient id="pistonGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#7d8a96"/>
+        <stop offset=".18" stop-color="#5f6c78"/>
+        <stop offset="1" stop-color="#414c57"/>
+      </linearGradient>
+      <linearGradient id="rodGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#6a7683"/>
+        <stop offset="1" stop-color="#48535e"/>
+      </linearGradient>
+      <radialGradient id="flameGrad" gradientUnits="userSpaceOnUse" cx="300" cy="250" r="90">
+        <stop offset="0"   stop-color="#fffbe6" stop-opacity="1"/>
+        <stop offset=".25" stop-color="#ffd94a" stop-opacity=".95"/>
+        <stop offset=".55" stop-color="#ff8a1e" stop-opacity=".8"/>
+        <stop offset=".8"  stop-color="#e14e00" stop-opacity=".35"/>
+        <stop offset="1"   stop-color="#e14e00" stop-opacity="0"/>
+      </radialGradient>
+      <clipPath id="chamberClip">
+        <rect id="chamberClipRect" x="240" y="214" width="120" height="10"/>
+      </clipPath>
+    </defs>
+
+    <!-- ======== crankcase ======== -->
+    <circle cx="300" cy="520" r="110" fill="#131a22" stroke="#2b3540" stroke-width="7"/>
+    <circle cx="300" cy="520" r="110" fill="none" stroke="#0a0e13" stroke-width="1.5"/>
+
+    <!-- ======== cylinder bore backdrop ======== -->
+    <rect x="240" y="214" width="120" height="264" fill="#0c1117"/>
+
+    <!-- ======== gas / combustion (clipped to chamber above piston) ======== -->
+    <g clip-path="url(#chamberClip)">
+      <rect id="gasRect" x="240" y="214" width="120" height="10" fill="rgba(80,160,255,0.4)"/>
+      <rect id="flameRect" x="240" y="214" width="120" height="10" fill="url(#flameGrad)" opacity="0"/>
+      <g id="flameBlobs"></g>
+      <g id="chamberParticles"></g>
+    </g>
+
+    <!-- ======== piston ======== -->
+    <g id="piston">
+      <path id="pistonBody" d="" fill="url(#pistonGrad)" stroke="#222b33" stroke-width="1.5"/>
+      <rect id="ring1" x="243" y="0" width="114" height="4" fill="#1c242c"/>
+      <rect id="ring2" x="243" y="0" width="114" height="4" fill="#1c242c"/>
+      <rect id="ring3" x="243" y="0" width="114" height="4" fill="#1c242c"/>
+    </g>
+
+    <!-- ======== crankshaft (rotating group, drawn at TDC pose) ======== -->
+    <g id="crank">
+      <!-- counterweight opposite the crank pin -->
+      <path d="M -52 14 A 64 64 0 1 0 52 14 L 30 -6 L -30 -6 Z"
+            transform="translate(300,520)" fill="#39434e" stroke="#232b33" stroke-width="2.5"/>
+      <!-- crank web up to the pin -->
+      <rect x="284" y="438" width="32" height="92" rx="15" fill="#4a5560" stroke="#232b33" stroke-width="2.5"/>
+      <!-- crank pin -->
+      <circle cx="300" cy="450" r="13" fill="#5f6b77" stroke="#232b33" stroke-width="2"/>
+      <!-- balance drill marks -->
+      <circle cx="300" cy="568" r="6" fill="#232b33"/>
+      <circle cx="270" cy="558" r="4.5" fill="#232b33"/>
+      <circle cx="330" cy="558" r="4.5" fill="#232b33"/>
+    </g>
+    <!-- main journal (static center) -->
+    <circle cx="300" cy="520" r="19" fill="#2b343e" stroke="#1a2129" stroke-width="3"/>
+    <circle cx="300" cy="520" r="6" fill="#161d24"/>
+
+    <!-- ======== connecting rod ======== -->
+    <line id="rodLine" x1="300" y1="270" x2="300" y2="450" stroke="url(#rodGrad)" stroke-width="17" stroke-linecap="round"/>
+    <line id="rodEdge" x1="300" y1="270" x2="300" y2="450" stroke="#232b33" stroke-width="21" stroke-linecap="round" opacity=".35"/>
+    <circle id="bigEnd" cx="300" cy="450" r="17" fill="none" stroke="#5a6673" stroke-width="8"/>
+    <circle id="bigEndRim" cx="300" cy="450" r="17" fill="none" stroke="#232b33" stroke-width="2"/>
+    <circle id="wristPin" cx="300" cy="270" r="10" fill="#77828e" stroke="#232b33" stroke-width="2.5"/>
+    <circle id="wristPinHole" cx="300" cy="270" r="4" fill="#2b333c"/>
+
+    <!-- ======== cylinder walls ======== -->
+    <rect x="221" y="214" width="19" height="262" fill="url(#wallGrad)" stroke="#1c242c" stroke-width="1.5"/>
+    <rect x="360" y="214" width="19" height="262" fill="url(#wallGrad)" stroke="#1c242c" stroke-width="1.5"/>
+
+    <!-- ======== cylinder head ======== -->
+    <rect x="206" y="148" width="188" height="66" rx="6" fill="url(#headGrad)" stroke="#1c242c" stroke-width="2"/>
+    <!-- head bolts -->
+    <circle cx="216" cy="160" r="4" fill="#232b33"/>
+    <circle cx="384" cy="160" r="4" fill="#232b33"/>
+
+    <!-- ======== ports (ducts drawn as pipes) ======== -->
+    <!-- intake (left) -->
+    <path d="M 262 218 L 262 168 Q 262 142 236 142 L 184 142" fill="none" stroke="#2b3540" stroke-width="27" stroke-linecap="butt"/>
+    <path d="M 262 218 L 262 168 Q 262 142 236 142 L 184 142" fill="none" stroke="#10161c" stroke-width="18" stroke-linecap="butt"/>
+    <path id="inDuctGas" d="M 262 218 L 262 168 Q 262 142 236 142 L 184 142" fill="none" stroke="rgba(80,160,255,.5)" stroke-width="14" stroke-linecap="butt" opacity="0"/>
+    <!-- exhaust (right) -->
+    <path d="M 338 218 L 338 168 Q 338 142 364 142 L 416 142" fill="none" stroke="#2b3540" stroke-width="27" stroke-linecap="butt"/>
+    <path d="M 338 218 L 338 168 Q 338 142 364 142 L 416 142" fill="none" stroke="#10161c" stroke-width="18" stroke-linecap="butt"/>
+    <path id="exDuctGas" d="M 338 218 L 338 168 Q 338 142 364 142 L 416 142" fill="none" stroke="rgba(150,155,160,.5)" stroke-width="14" stroke-linecap="butt" opacity="0"/>
+
+    <!-- invisible particle guides -->
+    <path id="inGuide" d="M 184 142 L 236 142 Q 262 142 262 168 L 262 216 L 262 305" fill="none" stroke="none"/>
+    <path id="exGuide" d="M 322 300 L 336 218 L 338 168 Q 338 142 364 142 L 416 142" fill="none" stroke="none"/>
+    <g id="portParticles"></g>
+
+    <!-- ======== valves ======== -->
+    <g id="intakeValve">
+      <rect x="258.5" y="126" width="7" height="82" rx="3" fill="#8b97a3" stroke="#232b33" stroke-width="1.2"/>
+      <path d="M 244 206 L 280 206 L 272 217 L 252 217 Z" fill="#9aa6b2" stroke="#232b33" stroke-width="1.5"/>
+    </g>
+    <g id="exhaustValve">
+      <rect x="334.5" y="126" width="7" height="82" rx="3" fill="#8b97a3" stroke="#232b33" stroke-width="1.2"/>
+      <path d="M 320 206 L 356 206 L 348 217 L 328 217 Z" fill="#9aa6b2" stroke="#232b33" stroke-width="1.5"/>
+    </g>
+    <!-- valve guides -->
+    <rect x="255" y="150" width="14" height="18" rx="3" fill="#39434e" stroke="#232b33" stroke-width="1.2"/>
+    <rect x="331" y="150" width="14" height="18" rx="3" fill="#39434e" stroke="#232b33" stroke-width="1.2"/>
+
+    <!-- ======== spark plug ======== -->
+    <rect x="293" y="112" width="14" height="16" rx="2" fill="#3d4854" stroke="#232b33" stroke-width="1.2"/>
+    <rect x="295" y="128" width="10" height="58" fill="#e8e4da" stroke="#9a958a" stroke-width="1"/>
+    <rect x="296.5" y="186" width="7" height="24" fill="#7d8894" stroke="#232b33" stroke-width="1"/>
+    <path d="M 296 210 L 296 217 M 304 210 L 305 219 L 297 220" stroke="#5f6b77" stroke-width="2.4" fill="none"/>
+    <g id="spark" opacity="0">
+      <circle cx="300" cy="220" r="6" fill="#fffdf0"/>
+      <path d="M300 220 L300 236 M300 220 L288 231 M300 220 L312 231 M300 220 L281 222 M300 220 L319 222"
+            stroke="#ffe97a" stroke-width="2.6" stroke-linecap="round"/>
+    </g>
+
+    <!-- ======== rotation arrow ======== -->
+    <path d="M 383 445 A 118 118 0 0 1 418 512" fill="none" stroke="#55606b" stroke-width="2.5"/>
+    <path d="M 421 498 L 418 514 L 404 508" fill="none" stroke="#55606b" stroke-width="2.5" stroke-linejoin="round"/>
+
+    <!-- ======== labels ======== -->
+    <g font-size="13" fill="#8b98a5" stroke="none">
+      <g stroke="#4a5560" stroke-width="1" stroke-dasharray="3 3">
+        <line x1="150" y1="122" x2="184" y2="138"/>
+        <line x1="452" y1="122" x2="418" y2="138"/>
+        <line x1="150" y1="262" x2="219" y2="262"/>
+        <line id="pistonLead" x1="452" y1="300" x2="381" y2="300"/>
+        <line id="rodLead" x1="152" y1="468" x2="272" y2="452"/>
+        <line x1="452" y1="562" x2="352" y2="540"/>
+      </g>
+      <text x="148" y="118" text-anchor="end">Intake</text>
+      <text x="454" y="118">Exhaust</text>
+      <text x="300" y="102" text-anchor="middle">Spark plug</text>
+      <text x="148" y="266" text-anchor="end">Cylinder</text>
+      <text x="454" y="304">Piston</text>
+      <text x="148" y="472" text-anchor="end">Connecting rod</text>
+      <text x="454" y="566">Crankshaft</text>
+    </g>
+  </svg>
+
+  <div class="strokebar">
+    <div class="seg s0">INTAKE</div>
+    <div class="seg s1">COMPRESSION</div>
+    <div class="seg s2">POWER</div>
+    <div class="seg s3">EXHAUST</div>
+    <div id="barMarker"></div>
+  </div>
+
+  <div class="controls">
+    <button id="pauseBtn">Pause</button>
+    <label for="speed">Speed</label>
+    <input id="speed" type="range" min="0.25" max="3" step="0.05" value="1">
+    <span id="speedVal">×1.00</span>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const TAU = Math.PI * 2;
+
+  // ---- slider-crank geometry (px) ----
+  const CX = 300, CY = 520;   // crank center
+  const R = 70;               // crank radius (half stroke)
+  const L = 180;              // connecting rod length
+  const BORE_L = 240, BORE_R = 360;
+  const HEAD_Y = 214;         // combustion chamber roof
+  const PIN_TO_CROWN = 48;    // wrist pin to piston crown
+  const PISTON_H = 68;
+  const MAX_LIFT = 15;
+
+  // theta = crank angle from TDC; exact slider-crank kinematics
+  const pinYAt = (theta) => {
+    const s = R * Math.sin(theta);
+    return CY - (R * Math.cos(theta) + Math.sqrt(L * L - s * s));
+  };
+  const crankPinAt = (theta) => [CX + R * Math.sin(theta), CY - R * Math.cos(theta)];
+
+  // ---- element refs ----
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    gasRect: $("gasRect"), flameRect: $("flameRect"), flameGrad: $("flameGrad"),
+    clipRect: $("chamberClipRect"), pistonBody: $("pistonBody"),
+    ring1: $("ring1"), ring2: $("ring2"), ring3: $("ring3"),
+    crank: $("crank"), rodLine: $("rodLine"), rodEdge: $("rodEdge"),
+    bigEnd: $("bigEnd"), bigEndRim: $("bigEndRim"),
+    wristPin: $("wristPin"), wristPinHole: $("wristPinHole"),
+    intakeValve: $("intakeValve"), exhaustValve: $("exhaustValve"),
+    inDuctGas: $("inDuctGas"), exDuctGas: $("exDuctGas"),
+    spark: $("spark"), inGuide: $("inGuide"), exGuide: $("exGuide"),
+    strokeName: $("strokeName"), strokeDot: $("strokeDot"),
+    pistonLead: $("pistonLead"), rodLead: $("rodLead"),
+    barMarker: $("barMarker"), pauseBtn: $("pauseBtn"),
+    speed: $("speed"), speedVal: $("speedVal"),
+    flameBlobs: $("flameBlobs"),
+  };
+  const segs = document.querySelectorAll(".strokebar .seg");
+
+  const STROKES = [
+    { name: "INTAKE",      color: "#4da3ff" },
+    { name: "COMPRESSION", color: "#9fd0ff" },
+    { name: "POWER",       color: "#ff9f2e" },
+    { name: "EXHAUST",     color: "#a9b0b8" },
+  ];
+
+  // ---- particles ----
+  const inLen = el.inGuide.getTotalLength();
+  const exLen = el.exGuide.getTotalLength();
+  const mkCircle = (parent, r, fill) => {
+    const c = document.createElementNS(SVGNS, "circle");
+    c.setAttribute("r", r);
+    c.setAttribute("fill", fill);
+    c.setAttribute("opacity", "0");
+    parent.appendChild(c);
+    return c;
+  };
+  const portGroup = $("portParticles");
+  const inParts = Array.from({ length: 16 }, () => ({
+    node: mkCircle(portGroup, 1.8 + Math.random() * 1.8, "#9ecbff"),
+    off: Math.random(), spread: (Math.random() * 2 - 1), wob: Math.random() * TAU,
+  }));
+  const exParts = Array.from({ length: 16 }, () => ({
+    node: mkCircle(portGroup, 1.8 + Math.random() * 1.8, "#c3c9cf"),
+    off: Math.random(), spread: (Math.random() * 2 - 1), wob: Math.random() * TAU,
+  }));
+  const blobs = Array.from({ length: 6 }, (_, i) => ({
+    node: mkCircle(el.flameBlobs, 7 + Math.random() * 8, i % 2 ? "#ffb23d" : "#ff7d1a"),
+    a: Math.random() * TAU, b: Math.random() * TAU,
+  }));
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  const mix = (c1, c2, t) => c1.map((v, i) => lerp(v, c2[i], t));
+  const rgba = (c) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${c[3].toFixed(3)})`;
+
+  const GREY = [135, 138, 144, 0.17];
+  const BLUE = [80, 160, 255, 0.42];
+  const BLUE_HI = [190, 220, 255, 0.75];
+  const ORANGE = [255, 148, 48, 0.55];
+  const GREY_EX = [162, 167, 173, 0.5];
+
+  // gas fill in the chamber as a function of cycle position p in [0,4)
+  function gasColor(p) {
+    if (p < 1) return mix(GREY, BLUE, clamp01(p * 3));
+    if (p < 2) return mix(BLUE, BLUE_HI, p - 1);
+    if (p < 3) return mix(ORANGE, GREY_EX, Math.pow(p - 2, 1.2));
+    return [GREY_EX[0], GREY_EX[1], GREY_EX[2], GREY_EX[3] * (1 - (p - 3) * 0.6)];
+  }
+
+  // ---- state ----
+  let phase = 0;            // crank angle, 0..4π per cycle
+  let speedMult = 1;
+  let paused = false;
+  let last = performance.now();
+  const BASE_RATE = Math.PI; // rad/s -> 4 s per cycle at ×1
+
+  function draw(t) {
+    const theta = phase % TAU;
+    const p = (phase / Math.PI) % 4;           // 0..4 stroke position
+    const stroke = Math.floor(p);
+
+    // --- kinematics ---
+    const pinY = pinYAt(phase);
+    const crownY = pinY - PIN_TO_CROWN;
+    const [cpx, cpy] = crankPinAt(phase);
+
+    // piston
+    el.pistonBody.setAttribute("d",
+      `M ${BORE_L + 2} ${crownY + 6} Q ${BORE_L + 2} ${crownY} ${BORE_L + 8} ${crownY}` +
+      ` L ${BORE_R - 8} ${crownY} Q ${BORE_R - 2} ${crownY} ${BORE_R - 2} ${crownY + 6}` +
+      ` L ${BORE_R - 2} ${crownY + PISTON_H} L ${BORE_L + 2} ${crownY + PISTON_H} Z`);
+    el.ring1.setAttribute("y", crownY + 8);
+    el.ring2.setAttribute("y", crownY + 15);
+    el.ring3.setAttribute("y", crownY + 22);
+
+    // crank + rod
+    el.crank.setAttribute("transform", `rotate(${(theta * 180 / Math.PI).toFixed(3)} ${CX} ${CY})`);
+    for (const ln of [el.rodEdge, el.rodLine]) {
+      ln.setAttribute("y1", pinY); ln.setAttribute("x2", cpx); ln.setAttribute("y2", cpy);
+    }
+    el.bigEnd.setAttribute("cx", cpx); el.bigEnd.setAttribute("cy", cpy);
+    el.bigEndRim.setAttribute("cx", cpx); el.bigEndRim.setAttribute("cy", cpy);
+    el.wristPin.setAttribute("cy", pinY);
+    el.wristPinHole.setAttribute("cy", pinY);
+
+    // leader lines track their moving parts
+    el.pistonLead.setAttribute("y2", (crownY + PISTON_H / 2).toFixed(1));
+    el.pistonLead.setAttribute("x2", "356");
+    el.rodLead.setAttribute("x2", ((CX + cpx) / 2 - 12).toFixed(1));
+    el.rodLead.setAttribute("y2", ((pinY + cpy) / 2).toFixed(1));
+
+    // --- chamber gas ---
+    const chamberH = Math.max(0, crownY - HEAD_Y);
+    el.clipRect.setAttribute("height", chamberH);
+    el.gasRect.setAttribute("height", chamberH);
+    el.flameRect.setAttribute("height", chamberH);
+    el.gasRect.setAttribute("fill", rgba(gasColor(p)));
+
+    // --- valves ---
+    const inLift = p < 1 ? Math.sin(p * Math.PI) : 0;
+    const exLift = p >= 3 ? Math.sin((p - 3) * Math.PI) : 0;
+    el.intakeValve.setAttribute("transform", `translate(0 ${inLift * MAX_LIFT})`);
+    el.exhaustValve.setAttribute("transform", `translate(0 ${exLift * MAX_LIFT})`);
+    el.inDuctGas.setAttribute("opacity", (inLift * 0.9).toFixed(3));
+    el.exDuctGas.setAttribute("opacity", (exLift * 0.9).toFixed(3));
+
+    // --- spark (fires just before TDC at end of compression) ---
+    const sparkOn = p > 1.955 && p < 2.1;
+    el.spark.setAttribute("opacity", sparkOn ? (0.6 + 0.4 * Math.sin(t * 0.09)).toFixed(3) : "0");
+
+    // --- flame ---
+    let flameI = 0;
+    if (p >= 2 && p < 3) {
+      const q = p - 2;
+      flameI = clamp01(q * 10) * Math.pow(1 - q, 1.4);
+    }
+    const flick = 1 + 0.07 * Math.sin(t * 0.04) + 0.05 * Math.sin(t * 0.013 + 2);
+    el.flameRect.setAttribute("opacity", (flameI * flick).toFixed(3));
+    el.flameGrad.setAttribute("cy", (HEAD_Y + chamberH * 0.35).toFixed(1));
+    el.flameGrad.setAttribute("r", Math.max(34, chamberH * 1.05 * flick).toFixed(1));
+    for (const bl of blobs) {
+      if (flameI > 0.03) {
+        const bx = 300 + 34 * Math.sin(t * 0.003 + bl.a) * Math.cos(t * 0.0017 + bl.b);
+        const by = HEAD_Y + chamberH * (0.3 + 0.4 * (0.5 + 0.5 * Math.sin(t * 0.004 + bl.b)));
+        bl.node.setAttribute("cx", bx.toFixed(1));
+        bl.node.setAttribute("cy", by.toFixed(1));
+        bl.node.setAttribute("opacity", (flameI * 0.5 * flick).toFixed(3));
+      } else {
+        bl.node.setAttribute("opacity", "0");
+      }
+    }
+
+    // --- particles ---
+    const flow = (parts, guide, len, prog, lift, wobAmp) => {
+      for (const pt of parts) {
+        if (lift < 0.02) { pt.node.setAttribute("opacity", "0"); continue; }
+        const u = (prog + pt.off) % 1;
+        const pos = guide.getPointAtLength(u * len);
+        let x = pos.x, y = pos.y;
+        if (y > HEAD_Y + 4) {            // inside the chamber: spread out
+          x += pt.spread * Math.min(26, (y - HEAD_Y) * 0.55);
+        } else {
+          x += Math.sin(t * 0.008 + pt.wob) * wobAmp;
+          y += Math.cos(t * 0.008 + pt.wob) * wobAmp;
+        }
+        if (y > HEAD_Y + 2 && y > crownY - 5) { // below the piston crown: hidden
+          pt.node.setAttribute("opacity", "0");
+          continue;
+        }
+        pt.node.setAttribute("cx", x.toFixed(1));
+        pt.node.setAttribute("cy", y.toFixed(1));
+        pt.node.setAttribute("opacity", (lift * 0.85).toFixed(3));
+      }
+    };
+    flow(inParts, el.inGuide, inLen, (p % 1) * 1.4, inLift, 2.5);
+    flow(exParts, el.exGuide, exLen, (p % 1) * 1.4, exLift, 2.5);
+
+    // --- HUD ---
+    const s = STROKES[stroke];
+    el.strokeName.textContent = s.name;
+    el.strokeName.style.color = s.color;
+    el.strokeDot.style.background = s.color;
+    segs.forEach((sg, i) => sg.classList.toggle("active", i === stroke));
+    el.barMarker.style.left = `calc(${(p / 4 * 100).toFixed(2)}% - 1px)`;
+  }
+
+  function frame(now) {
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+    last = now;
+    if (!paused) phase = (phase + BASE_RATE * speedMult * dt) % (2 * TAU);
+    draw(now);
+    requestAnimationFrame(frame);
+  }
+
+  el.pauseBtn.addEventListener("click", () => {
+    paused = !paused;
+    el.pauseBtn.textContent = paused ? "Play" : "Pause";
+  });
+  el.speed.addEventListener("input", () => {
+    speedMult = parseFloat(el.speed.value);
+    el.speedVal.textContent = "×" + speedMult.toFixed(2);
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "Space" && e.target.tagName !== "BUTTON") {
+      e.preventDefault();
+      el.pauseBtn.click();
+    }
+  });
+
+  // debug hook: freeze at a given stroke position p in [0,4)
+  window.__engine = { setPhase(p) { paused = true; el.pauseBtn.textContent = "Play"; phase = p * Math.PI; draw(performance.now()); } };
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

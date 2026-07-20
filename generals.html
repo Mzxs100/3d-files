@@ -1660,9 +1660,13 @@ const Glass = (() => {
     const fi = el('feImage', { x: 0, y: 0, width: w, height: h, preserveAspectRatio: 'none', result: 'map' });
     fi.setAttribute('href', lensMap(w, h, Math.min(r, Math.min(w, h) / 2), rim));
     f.appendChild(fi);
-    /* chromatic split: red bent ~6% more than blue */
-    [['R', 1.06], ['G', 1.0], ['B', 0.94]].forEach(([c, k]) => {
-      f.appendChild(el('feDisplacementMap', { in: 'SourceGraphic', in2: 'map',
+    /* diffuse the backdrop before lensing it — the refracted content is soft,
+       scaling with element size (subtle on buttons, heavier on sheets) */
+    const blurStd = Math.max(1.3, Math.min(5, Math.min(w, h) * 0.032));
+    f.appendChild(el('feGaussianBlur', { in: 'SourceGraphic', stdDeviation: blurStd.toFixed(2), result: 'soft' }));
+    /* chromatic split: red bent ~15% more than blue for a visible rim fringe */
+    [['R', 1.16], ['G', 1.0], ['B', 0.86]].forEach(([c, k]) => {
+      f.appendChild(el('feDisplacementMap', { in: 'soft', in2: 'map',
         scale: (scale * k).toFixed(2), xChannelSelector: 'R', yChannelSelector: 'G', result: 'd' + c }));
       f.appendChild(el('feColorMatrix', { in: 'd' + c, type: 'matrix', values: CH[c], result: 'c' + c }));
     });

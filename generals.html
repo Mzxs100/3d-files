@@ -33,7 +33,8 @@
     background:rgba(24,32,14,.92); color:#e8e6d8; font-weight:700; font-size:15px; position:relative; }
   .gbtn:active { background:#3a4a24; }
   .gbtn .cnt { position:absolute; top:1px; right:4px; font-size:9px; color:#ffd75e; }
-  #diffRow { display:flex; gap:8px; margin-top:4px; }
+  .rowlbl { font-size:11px; color:#9ab070; margin-top:10px; letter-spacing:1.5px; }
+  .pickrow { display:flex; gap:8px; margin-top:4px; }
   .diff { flex:1; padding:10px 4px !important; border-radius:8px; border:1px solid #6a7a44;
     background:#1c260e !important; color:#cdd6b8 !important; font-weight:700; width:auto !important; }
   .diff.on { background:#ffd75e !important; color:#1a2208 !important; }
@@ -112,7 +113,20 @@
       <li><b>Fog of war</b> hides the enemy — send a scout to reveal the map. Explored ground stays on your minimap.</li>
     </ul>
     <p><b>Mission:</b> the GLA holds the north-east. Destroy every enemy structure. They will send raids — dig in fast, General.</p>
-    <div id="diffRow">
+    <div class="rowlbl">YOUR FACTION</div>
+    <div id="facRow" class="pickrow">
+      <button class="diff on" data-f="usa">USA</button>
+      <button class="diff" data-f="china">CHINA</button>
+      <button class="diff" data-f="gla">GLA</button>
+    </div>
+    <div class="rowlbl">ENEMY FACTION</div>
+    <div id="foeRow" class="pickrow">
+      <button class="diff" data-e="usa">USA</button>
+      <button class="diff" data-e="china">CHINA</button>
+      <button class="diff on" data-e="gla">GLA</button>
+    </div>
+    <div class="rowlbl">DIFFICULTY</div>
+    <div id="diffRow" class="pickrow">
       <button class="diff" data-d="easy">EASY</button>
       <button class="diff on" data-d="normal">NORMAL</button>
       <button class="diff" data-d="hard">HARD</button>
@@ -151,8 +165,9 @@ function defAsset(name, w, h, body) {
 
 /* --- team palettes: USA (player) & GLA (enemy) --- */
 const PAL = {
-  usa: { body:'#5e6b52', body2:'#4a5642', trim:'#2e7dd7', trim2:'#8fc1ff', metal:'#8a917f', dark:'#31382b', roof:'#767f6a', wall:'#9aa08c', glow:'#59d0ff' },
-  gla: { body:'#9a8a5a', body2:'#7c6f46', trim:'#c03a22', trim2:'#ff9a7a', metal:'#a89a72', dark:'#4a4028', roof:'#8f8258', wall:'#b0a274', glow:'#ffb347' }
+  usa:   { body:'#5e6b52', body2:'#4a5642', trim:'#2e7dd7', trim2:'#8fc1ff', metal:'#8a917f', dark:'#31382b', roof:'#767f6a', wall:'#9aa08c', glow:'#59d0ff' },
+  china: { body:'#66594a', body2:'#52483c', trim:'#d9302c', trim2:'#ff8a80', metal:'#93876f', dark:'#38302a', roof:'#7d7060', wall:'#a09482', glow:'#ffb02e' },
+  gla:   { body:'#9a8a5a', body2:'#7c6f46', trim:'#3f7d3a', trim2:'#8fd48a', metal:'#a89a72', dark:'#4a4028', roof:'#8f8258', wall:'#b0a274', glow:'#ffb347' }
 };
 
 function defUnitAssets(t) {
@@ -221,7 +236,46 @@ function defUnitAssets(t) {
     <rect x="24" y="29.8" width="22" height="4.4" rx="2" fill="#22262c"/>
     <circle cx="24" cy="32" r="2.6" fill="${P.trim}"/>`);
 }
-defUnitAssets('usa'); defUnitAssets('gla');
+defUnitAssets('usa'); defUnitAssets('china'); defUnitAssets('gla');
+/* faction-specific extra sprites */
+{
+  const P = PAL.china; /* Overlord heavy tank — twin barrels */
+  defAsset('china_heavy', 72, 72, `
+    <rect x="6" y="8" width="58" height="13" rx="6" fill="${P.dark}"/>
+    <rect x="6" y="51" width="58" height="13" rx="6" fill="${P.dark}"/>
+    <rect x="8" y="10" width="54" height="9" rx="4" fill="#20241c"/><rect x="8" y="53" width="54" height="9" rx="4" fill="#20241c"/>
+    <rect x="7" y="16" width="56" height="40" rx="8" fill="${P.body}"/>
+    <path d="M63 24 L70 30 L70 42 L63 48 Z" fill="${P.body2}"/>
+    <circle cx="33" cy="36" r="16" fill="${P.body2}"/>
+    <circle cx="33" cy="36" r="11" fill="${P.body}"/>
+    <rect x="33" y="27.4" width="34" height="6.4" rx="2.6" fill="${P.dark}"/>
+    <rect x="33" y="38.2" width="34" height="6.4" rx="2.6" fill="${P.dark}"/>
+    <rect x="60" y="26.2" width="8" height="8.8" rx="2.4" fill="#31363e"/><rect x="60" y="37" width="8" height="8.8" rx="2.4" fill="#31363e"/>
+    <path d="M33 30 L37 36 L33 42 L29 36 Z" fill="${P.trim}"/>`);
+}
+{
+  const P = PAL.gla; /* Worker — builds and gathers */
+  defAsset('gla_worker', 32, 32, `
+    <ellipse cx="15" cy="16" rx="8" ry="9" fill="#a5915c"/>
+    <circle cx="16" cy="16" r="5.4" fill="#8a7648"/>
+    <circle cx="16" cy="16" r="3.4" fill="#c9b16f"/>
+    <rect x="18" y="14.8" width="10" height="2.4" rx="1.2" fill="#7a6a4a"/>
+    <path d="M28 12.6 L31 16 L28 19.4 Z" fill="#9aa0a8"/>
+    <circle cx="9" cy="21" r="3.6" fill="#caa64a" stroke="#8a6f28" stroke-width="1.4"/>
+    <rect x="10" y="9" width="5" height="4" rx="2" fill="${P.dark}"/>`);
+  /* Quad Cannon — four-barrel AA truck */
+  defAsset('gla_quad', 64, 64, `
+    <circle cx="17" cy="15" r="6" fill="#1d2118"/><circle cx="45" cy="15" r="6" fill="#1d2118"/>
+    <circle cx="17" cy="49" r="6" fill="#1d2118"/><circle cx="45" cy="49" r="6" fill="#1d2118"/>
+    <rect x="7" y="17" width="48" height="30" rx="9" fill="${P.body}"/>
+    <rect x="11" y="21" width="16" height="22" rx="4" fill="${P.body2}"/>
+    <circle cx="34" cy="32" r="9" fill="${P.dark}"/>
+    <rect x="34" y="24.5" width="24" height="3" rx="1.5" fill="#22262c"/>
+    <rect x="34" y="29" width="26" height="3" rx="1.5" fill="#22262c"/>
+    <rect x="34" y="32" width="26" height="3" rx="1.5" fill="#22262c"/>
+    <rect x="34" y="36.5" width="24" height="3" rx="1.5" fill="#22262c"/>
+    <circle cx="34" cy="32" r="3" fill="${P.trim}"/>`);
+}
 
 function defBuildingAssets(t) {
   const P = PAL[t];
@@ -305,7 +359,7 @@ function defBuildingAssets(t) {
     <circle cx="52" cy="26.5" r="2.4" fill="#181c20"/><circle cx="52" cy="37.5" r="2.4" fill="#181c20"/>
     <circle cx="28" cy="32" r="5" fill="${P.trim}"/>`);
 }
-defBuildingAssets('usa'); defBuildingAssets('gla');
+defBuildingAssets('usa'); defBuildingAssets('china'); defBuildingAssets('gla');
 
 /* Neutral / terrain sprites */
 defAsset('supplyPile', 80, 80, `
@@ -331,14 +385,83 @@ defAsset('crater', 48, 48, `
   <ellipse cx="24" cy="24" rx="12" ry="9" fill="rgba(10,8,4,.6)"/>`);
 
 /* ============================== DATA ============================== */
-const UNITS = {
-  dozer:  { name:'Dozer',        cost:1000, hp:250, speed:62,  r:15, sight:200, svg:'dozer',  size:40, arm:'light', builder:true,  bt:8 },
-  truck:  { name:'Supply Truck', cost:600,  hp:320, speed:88,  r:15, sight:180, svg:'truck',  size:42, arm:'light', harvester:true,bt:6 },
-  inf:    { name:'Ranger',       cost:225,  hp:120, speed:56,  r:8,  sight:230, svg:'inf',    size:24, arm:'inf',   dmg:10, range:150, rof:0.45, proj:'bullet', bt:4 },
-  rocket: { name:'Missile Def.', cost:300,  hp:100, speed:50,  r:8,  sight:250, svg:'rocket', size:24, arm:'inf',   dmg:38, range:195, rof:1.9,  proj:'rocket', bt:5 },
-  tank:   { name:'Crusader',     cost:900,  hp:420, speed:66,  r:17, sight:240, svg:'tank',   size:46, arm:'tank',  dmg:55, range:180, rof:1.7,  proj:'shell',  bt:9, splash:26 },
-  car:    { name:'Humvee',       cost:700,  hp:250, speed:118, r:15, sight:250, svg:'car',    size:42, arm:'light', dmg:10, range:160, rof:0.22, proj:'bullet', bt:7 }
+/* ============================== FACTION DATA ============================== */
+/* Shared type keys (dozer/truck/inf/rocket/tank/car/heavy/quad, cc/power/rax/
+   sup/fact/turret) keep every system generic — each faction supplies its own
+   stats, names, and sprites for the keys it fields. */
+const FACTIONS = {
+  usa: {
+    name: 'USA', powerNeeded: true,
+    units: {
+      dozer:  { name:'Dozer',        cost:1000, hp:250, speed:62,  r:15, sight:200, svg:'dozer',  size:40, arm:'light', builder:true,  bt:8 },
+      truck:  { name:'Supply Truck', cost:600,  hp:320, speed:88,  r:15, sight:180, svg:'truck',  size:42, arm:'light', harvester:true,bt:6 },
+      inf:    { name:'Ranger',       cost:225,  hp:120, speed:56,  r:8,  sight:230, svg:'inf',    size:24, arm:'inf',   dmg:10, range:150, rof:0.45, proj:'bullet', bt:4 },
+      rocket: { name:'Missile Def.', cost:300,  hp:100, speed:50,  r:8,  sight:250, svg:'rocket', size:24, arm:'inf',   dmg:38, range:195, rof:1.9,  proj:'rocket', bt:5 },
+      tank:   { name:'Crusader',     cost:900,  hp:420, speed:66,  r:17, sight:240, svg:'tank',   size:46, arm:'tank',  dmg:55, range:180, rof:1.7,  proj:'shell',  bt:9, splash:26 },
+      car:    { name:'Humvee',       cost:700,  hp:250, speed:118, r:15, sight:250, svg:'car',    size:42, arm:'light', dmg:10, range:160, rof:0.22, proj:'bullet', bt:7 }
+    },
+    buildings: {
+      cc:     { name:'Command Center', cost:2000, hp:2200, w:118, h:118, svg:'cc',     power:2,  produce:['dozer'],        bt:20 },
+      power:  { name:'Cold Fusion',    cost:800,  hp:600,  w:86,  h:86,  svg:'power',  power:-8, bt:9 },
+      rax:    { name:'Barracks',       cost:500,  hp:850,  w:88,  h:88,  svg:'rax',    power:1,  produce:['inf','rocket'], bt:9 },
+      sup:    { name:'Supply Center',  cost:1400, hp:1000, w:102, h:88,  svg:'sup',    power:1,  produce:['truck'], depot:true, bt:11 },
+      fact:   { name:'War Factory',    cost:2000, hp:1300, w:116, h:100, svg:'fact',   power:1,  produce:['tank','car'],   bt:14, req:'sup' },
+      turret: { name:'Patriot',        cost:1000, hp:550,  w:64,  h:64,  svg:'turret', power:2,  dmg:42, range:250, rof:1.3, proj:'rocket', bt:9, req:'rax' }
+    },
+    menu: ['power','rax','sup','fact','turret','cc']
+  },
+  china: {
+    name: 'China', powerNeeded: true, horde: true,
+    units: {
+      dozer:  { name:'Dozer',         cost:1000, hp:250, speed:58,  r:15, sight:200, svg:'dozer',  size:40, arm:'light', builder:true,  bt:8 },
+      truck:  { name:'Supply Truck',  cost:600,  hp:350, speed:80,  r:15, sight:180, svg:'truck',  size:42, arm:'light', harvester:true,bt:6 },
+      inf:    { name:'Red Guard',     cost:150,  hp:100, speed:54,  r:8,  sight:220, svg:'inf',    size:24, arm:'inf',   dmg:8,  range:140, rof:0.5,  proj:'bullet', bt:3 },
+      rocket: { name:'Tank Hunter',   cost:300,  hp:100, speed:48,  r:8,  sight:240, svg:'rocket', size:24, arm:'inf',   dmg:36, range:190, rof:2.0,  proj:'rocket', bt:5 },
+      tank:   { name:'Battlemaster',  cost:800,  hp:430, speed:60,  r:17, sight:230, svg:'tank',   size:46, arm:'tank',  dmg:50, range:175, rof:1.6,  proj:'shell',  bt:8, splash:24 },
+      car:    { name:'Gattling Tank', cost:800,  hp:320, speed:85,  r:16, sight:250, svg:'car',    size:44, arm:'tank',  dmg:12, range:170, rof:0.15, proj:'bullet', bt:8 },
+      heavy:  { name:'Overlord',      cost:1450, hp:980, speed:38,  r:24, sight:230, svg:'heavy',  size:62, arm:'tank',  dmg:80, range:185, rof:2.2,  proj:'shell',  bt:16, splash:34 }
+    },
+    buildings: {
+      cc:     { name:'Command Center',  cost:2000, hp:2300, w:118, h:118, svg:'cc',     power:2,   produce:['dozer'],        bt:20 },
+      power:  { name:'Nuclear Reactor', cost:1000, hp:750,  w:86,  h:86,  svg:'power',  power:-10, bt:10 },
+      rax:    { name:'Barracks',        cost:500,  hp:900,  w:88,  h:88,  svg:'rax',    power:1,   produce:['inf','rocket'], bt:9 },
+      sup:    { name:'Supply Center',   cost:1400, hp:1050, w:102, h:88,  svg:'sup',    power:1,   produce:['truck'], depot:true, bt:11 },
+      fact:   { name:'War Factory',     cost:2000, hp:1400, w:116, h:100, svg:'fact',   power:1,   produce:['tank','car','heavy'], bt:14, req:'sup' },
+      turret: { name:'Gattling Cannon', cost:800,  hp:520,  w:64,  h:64,  svg:'turret', power:2,   dmg:12, range:235, rof:0.15, proj:'bullet', bt:8, req:'rax' }
+    },
+    menu: ['power','rax','sup','fact','turret','cc']
+  },
+  gla: {
+    name: 'GLA', powerNeeded: false,
+    units: {
+      dozer:  { name:'Worker',      cost:300, hp:100, speed:52,  r:9,  sight:180, svg:'worker', size:26, arm:'inf',   builder:true, harvester:true, load:150, bt:3 },
+      inf:    { name:'Rebel',       cost:150, hp:100, speed:58,  r:8,  sight:220, svg:'inf',    size:24, arm:'inf',   dmg:8,  range:145, rof:0.5,  proj:'bullet', bt:3 },
+      rocket: { name:'RPG Trooper', cost:275, hp:90,  speed:52,  r:8,  sight:240, svg:'rocket', size:24, arm:'inf',   dmg:35, range:185, rof:1.9,  proj:'rocket', bt:4 },
+      tank:   { name:'Scorpion',    cost:700, hp:340, speed:72,  r:16, sight:230, svg:'tank',   size:44, arm:'tank',  dmg:45, range:170, rof:1.6,  proj:'shell',  bt:7, splash:20 },
+      car:    { name:'Technical',   cost:500, hp:200, speed:125, r:15, sight:250, svg:'car',    size:42, arm:'light', dmg:10, range:155, rof:0.2,  proj:'bullet', bt:5 },
+      quad:   { name:'Quad Cannon', cost:700, hp:300, speed:90,  r:15, sight:250, svg:'quad',   size:44, arm:'light', dmg:14, range:170, rof:0.14, proj:'bullet', bt:7 }
+    },
+    buildings: {
+      cc:     { name:'Command Center', cost:1800, hp:2000, w:118, h:118, svg:'cc',     power:0, produce:['dozer'],        bt:18 },
+      rax:    { name:'Barracks',       cost:500,  hp:800,  w:88,  h:88,  svg:'rax',    power:0, produce:['inf','rocket'], bt:8 },
+      sup:    { name:'Supply Stash',   cost:1200, hp:900,  w:102, h:88,  svg:'sup',    power:0, produce:['dozer'], depot:true, bt:10 },
+      fact:   { name:'Arms Dealer',    cost:1800, hp:1200, w:116, h:100, svg:'fact',   power:0, produce:['tank','car','quad'], bt:12, req:'sup' },
+      turret: { name:'Stinger Site',   cost:900,  hp:500,  w:64,  h:64,  svg:'turret', power:0, dmg:40, range:240, rof:1.4, proj:'rocket', bt:8, req:'rax' }
+    },
+    menu: ['rax','sup','fact','turret','cc']
+  }
 };
+function unitDef(team, type) { return FACTIONS[state.fac[team]].units[type]; }
+function bldDef(team, type)  { return FACTIONS[state.fac[team]].buildings[type]; }
+let playerFac = 'usa', enemyFac = 'gla';
+/* China horde bonus: +25% damage with 3+ armed comrades nearby */
+function hordeMul(u) {
+  if (!u || u.kind !== 'unit' || !FACTIONS[state.fac[u.team]].horde) return 1;
+  let n = 0;
+  for (const v of state.units)
+    if (v !== u && v.team === u.team && v.d.dmg && dist(u.x, u.y, v.x, v.y) < 140 && ++n >= 3) return 1.25;
+  return 1;
+}
 /* damage-type vs armor-class multipliers: guns shred infantry but barely dent
    armor/structures; rockets crack tanks & buildings; cannons are all-round */
 const DMG_MATRIX = {
@@ -363,16 +486,6 @@ function promote(u) {
     if (u.team === 'usa') beep(1200, 0.12, 'sine', 0.06, 300);
   }
 }
-const GLA_NAMES = { dozer:'Worker', truck:'Supply Truck', inf:'Rebel', rocket:'RPG Trooper', tank:'Scorpion', car:'Technical' };
-const BUILDINGS = {
-  cc:     { name:'Command Center', cost:2000, hp:2200, w:118, h:118, svg:'cc',     power:2,  produce:['dozer'],        bt:20 },
-  power:  { name:'Reactor',        cost:800,  hp:600,  w:86,  h:86,  svg:'power',  power:-8, bt:9 },
-  rax:    { name:'Barracks',       cost:500,  hp:850,  w:88,  h:88,  svg:'rax',    power:1,  produce:['inf','rocket'], bt:9 },
-  sup:    { name:'Supply Center',  cost:1400, hp:1000, w:102, h:88,  svg:'sup',    power:1,  produce:['truck'], depot:true, bt:11 },
-  fact:   { name:'War Factory',    cost:2000, hp:1300, w:116, h:100, svg:'fact',   power:1,  produce:['tank','car'],   bt:14, req:'sup' },
-  turret: { name:'Patriot',        cost:1000, hp:550,  w:64,  h:64,  svg:'turret', power:2,  dmg:42, range:250, rof:1.3, proj:'rocket', bt:9, req:'rax' }
-};
-const BUILD_MENU = ['power', 'rax', 'sup', 'fact', 'turret', 'cc'];
 /* skirmish difficulty presets (enemy economy & wave pacing) */
 const DIFFS = {
   easy:   { start: 600,  inc0: 6,  ramp: 70, cap: 14, grace: 80, first: 210, period: 95, waveCap: 5,  rebuild: false },
@@ -388,6 +501,7 @@ const state = {
   money: 5000, t: 0, over: false,
   units: [], buildings: [], piles: [], projs: [], parts: [], decos: [],
   sel: [], selB: null,
+  fac: { usa: 'usa', gla: 'gla' },
   alerts: [], alertT: -99,
   cam: { x: 300, y: WORLD - 300, z: 0.6 },
   mode: null,       // null | 'place' | 'atkmove' | 'box'
@@ -397,7 +511,7 @@ const state = {
 let ID = 1;
 
 function makeUnit(team, type, x, y) {
-  const d = UNITS[type];
+  const d = unitDef(team, type);
   const u = { id: ID++, kind:'unit', team, type, x, y, a: team === 'usa' ? -Math.PI/4 : Math.PI*0.75,
     hp: d.hp, maxhp: d.hp, cd: 0, order: null, tgt: null, load: 0, hState: 0, hTimer: 0, pileId: 0,
     px: x, py: y, stuckT: 0, idleT: 0, guard: false, detour: null, avoid: 0,
@@ -407,7 +521,7 @@ function makeUnit(team, type, x, y) {
   return u;
 }
 function makeBuilding(team, type, x, y, built) {
-  const d = BUILDINGS[type];
+  const d = bldDef(team, type);
   const b = { id: ID++, kind:'bld', team, type, x, y, w: d.w, h: d.h,
     hp: built ? d.hp : d.hp * 0.08, maxhp: d.hp, built: !!built, prog: built ? 1 : 0.08,
     queue: [], qprog: 0, rally: { x, y: y + d.h / 2 + 40 }, cd: 0, tgt: null, ta: 0, d };
@@ -434,8 +548,10 @@ function genMap() {
   /* GLA base */
   const ex = WORLD - 300, ey = 300;
   makeBuilding('gla', 'cc', ex, ey, true);
-  makeBuilding('gla', 'power', ex - 210, ey - 60, true);
-  makeBuilding('gla', 'power', ex + 40, ey + 200, true);
+  if (FACTIONS[state.fac.gla].buildings.power) {
+    makeBuilding('gla', 'power', ex - 210, ey - 60, true);
+    makeBuilding('gla', 'power', ex + 40, ey + 200, true);
+  }
   makeBuilding('gla', 'rax', ex - 230, ey + 130, true);
   makeBuilding('gla', 'fact', ex + 60, ey - 210, true);
   makeBuilding('gla', 'sup', ex - 380, ey - 30, true);
@@ -534,6 +650,7 @@ function boom(vol, dur) {
 
 /* ============================== HELPERS ============================== */
 function powerStat() {
+  if (!FACTIONS[state.fac.usa].powerNeeded) return { gen: 0, use: 0, ok: true, na: true };
   let gen = 0, use = 0;
   for (const b of state.buildings) if (b.team === 'usa' && b.built) {
     if (b.d.power < 0) gen -= b.d.power; else use += b.d.power;
@@ -726,7 +843,7 @@ function fireAt(sh, tgt, d) {
   const kind = d.proj;
   const muzzle = (sh.d && sh.d.r) ? sh.d.r : 20;
   state.projs.push({ x: sh.x + Math.cos(sh.a) * muzzle, y: sh.y + Math.sin(sh.a) * muzzle,
-    tgt, team: sh.team, dmg: d.dmg * (sh.dmgMul || 1), splash: d.splash || 0, kind, src: sh,
+    tgt, team: sh.team, dmg: d.dmg * (sh.dmgMul || 1) * hordeMul(sh), splash: d.splash || 0, kind, src: sh,
     speed: kind === 'bullet' ? 900 : kind === 'rocket' ? 420 : 560,
     lx: tgt.x, ly: tgt.y, life: 2.4 });
   if (kind === 'bullet') beep(rnd(900, 1300), 0.05, 'square', 0.03, -500);
@@ -810,7 +927,7 @@ function updateUnit(u, dt) {
       const p = state.piles.find(p => p.id === u.pileId);
       if (!p || p.amt <= 0) { u.hState = 1; return; }
       if (u.hTimer <= 0) {
-        u.load = Math.min(300, p.amt); p.amt -= u.load;
+        u.load = Math.min(u.d.load || 300, p.amt); p.amt -= u.load;
         u.hState = 3;
       }
     } else if (u.hState === 3) { /* return */
@@ -837,11 +954,11 @@ function updateUnit(u, dt) {
     if (!u.site) {
       const resume = o.resume ? state.buildings.find(b => b.id === o.resume) : null;
       if (o.resume && !resume) { u.order = null; return; }
-      if (moveToward(u, o.x, o.y + BUILDINGS[o.bt].h / 2 + 26, dt, 34)) {
+      if (moveToward(u, o.x, o.y + bldDef(u.team, o.bt).h / 2 + 26, dt, 34)) {
         if (resume) u.site = resume; /* already paid for — resume free of charge */
         else {
-          if (state.money < BUILDINGS[o.bt].cost) { toast('Insufficient funds'); u.order = null; return; }
-          state.money -= BUILDINGS[o.bt].cost;
+          if (state.money < bldDef(u.team, o.bt).cost) { toast('Insufficient funds'); u.order = null; return; }
+          state.money -= bldDef(u.team, o.bt).cost;
           u.site = makeBuilding(u.team, o.bt, o.x, o.y, false);
         }
         o.ignore = u.site.id;
@@ -925,7 +1042,7 @@ function updateBuilding(b, dt, pow) {
   /* production */
   if (b.queue.length) {
     const speed = (b.team === 'gla' || pow.ok) ? 1 : 0.45;
-    const ut = UNITS[b.queue[0]];
+    const ut = unitDef(b.team, b.queue[0]);
     b.qprog += dt / ut.bt * speed;
     if (b.qprog >= 1) {
       b.qprog = 0;
@@ -996,17 +1113,19 @@ function aiUpdate(dt) {
   if (D.rebuild && alive('cc') && !state.buildings.some(b => b.team === 'gla' && !b.built)) {
     for (const p of ai.plan) {
       if (state.buildings.some(b => b.team === 'gla' && b.type === p.type && dist(b.x, b.y, p.x, p.y) < 60)) continue;
-      if (ai.money < BUILDINGS[p.type].cost) break;
+      if (ai.money < bldDef('gla', p.type).cost) break;
       if (state.units.some(u => dist(u.x, u.y, p.x, p.y) < 90)) continue; /* site contested */
-      ai.money -= BUILDINGS[p.type].cost;
+      ai.money -= bldDef('gla', p.type).cost;
       makeBuilding('gla', p.type, p.x, p.y, false).auto = true;
       break;
     }
   }
   /* keep a small harvesting fleet running */
   if (sup) {
-    const trucks = state.units.filter(u => u.team === 'gla' && u.d.harvester).length + sup.queue.length;
-    if (trucks < 2 && ai.money >= UNITS.truck.cost) { ai.money -= UNITS.truck.cost; sup.queue.push('truck'); }
+    const EU = FACTIONS[state.fac.gla].units;
+    const gType = EU.truck ? 'truck' : 'dozer';
+    const gatherers = state.units.filter(u => u.team === 'gla' && u.d.harvester).length + sup.queue.length;
+    if (gatherers < 2 && ai.money >= EU[gType].cost) { ai.money -= EU[gType].cost; sup.queue.push(gType); }
   }
   /* idle combat units at the base stage up into the next wave */
   const staged = state.units.filter(u => u.team === 'gla' && u.d.dmg && !u.order && !u.tgt && !u.guard);
@@ -1017,9 +1136,12 @@ function aiUpdate(dt) {
   if (state.t > D.grace && staged.length + queued < waveSize + 1) {
     for (const b of [fact, rax]) {
       if (!b || b.queue.length >= 2) continue;
-      const opts = b === fact ? ['tank', 'tank', 'car'] : ['inf', 'inf', 'rocket'];
+      const EU2 = FACTIONS[state.fac.gla].units;
+      const opts = b === fact
+        ? ['tank', 'tank', 'car'].concat(EU2.heavy ? ['heavy'] : [], EU2.quad ? ['quad'] : [])
+        : ['inf', 'inf', 'rocket'];
       const type = opts[(Math.random() * opts.length) | 0];
-      if (ai.money >= UNITS[type].cost) { ai.money -= UNITS[type].cost; b.queue.push(type); }
+      if (ai.money >= EU2[type].cost) { ai.money -= EU2[type].cost; b.queue.push(type); }
     }
   }
   /* maintain a home guard of 3 before committing units to waves */
@@ -1110,7 +1232,7 @@ function render() {
   /* buildings */
   for (const b of state.buildings) {
     if (b.team === 'gla' && !seenAt(b.x, b.y)) continue;
-    const img = ASSETS[b.team + '_' + b.d.svg];
+    const img = ASSETS[state.fac[b.team] + '_' + b.d.svg];
     if (!b.built) {
       ctx.globalAlpha = 0.45 + 0.5 * b.prog;
       const h = b.h * (0.35 + 0.65 * b.prog);
@@ -1121,7 +1243,7 @@ function render() {
     } else {
       ctx.drawImage(img, b.x - b.w/2, b.y - b.h/2, b.w, b.h);
       if (b.d.dmg) { /* turret top */
-        const top = ASSETS[b.team + '_turretTop'];
+        const top = ASSETS[state.fac[b.team] + '_turretTop'];
         ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.ta || 0); ctx.drawImage(top, -32, -32, 64, 64); ctx.restore();
       }
       if (b.hp < b.maxhp * 0.5 && Math.random() < 0.12)
@@ -1153,7 +1275,7 @@ function render() {
   /* units */
   for (const u of state.units) {
     if (u.team === 'gla' && !visAt(u.x, u.y)) continue;
-    const img = ASSETS[u.team + '_' + u.d.svg];
+    const img = ASSETS[state.fac[u.team] + '_' + u.d.svg];
     ctx.save(); ctx.translate(u.x, u.y); ctx.rotate(u.a);
     ctx.drawImage(img, -u.d.size/2, -u.d.size/2, u.d.size, u.d.size);
     ctx.restore();
@@ -1210,10 +1332,10 @@ function render() {
   ctx.drawImage(FOW.cv, 0, 0, WORLD, WORLD);
   /* placement ghost */
   if (state.mode === 'place' && state.ghost) {
-    const g = state.ghost, d = BUILDINGS[g.type];
+    const g = state.ghost, d = bldDef('usa', g.type);
     const ok = placementOK(g);
     ctx.globalAlpha = 0.65;
-    ctx.drawImage(ASSETS['usa_' + d.svg], g.x - d.w/2, g.y - d.h/2, d.w, d.h);
+    ctx.drawImage(ASSETS[state.fac.usa + '_' + d.svg], g.x - d.w/2, g.y - d.h/2, d.w, d.h);
     ctx.globalAlpha = 1;
     ctx.strokeStyle = ok ? 'rgba(110,255,110,.95)' : 'rgba(255,70,50,.95)';
     ctx.lineWidth = 3;
@@ -1259,7 +1381,7 @@ function renderMinimap() {
 }
 
 function placementOK(g) {
-  const d = BUILDINGS[g.type];
+  const d = bldDef('usa', g.type);
   const r = { x: g.x - d.w/2 - 8, y: g.y - d.h/2 - 8, w: d.w + 16, h: d.h + 16 };
   if (r.x < 20 || r.y < 20 || r.x + r.w > WORLD - 20 || r.y + r.h > WORLD - 20) return false;
   for (const b of state.buildings) if (rectsOverlap(r, bldRect(b, 6))) return false;
@@ -1464,7 +1586,7 @@ function rebuildBar() {
   if (state.mode === 'place' && state.ghost) {
     mkBtn('<div style="font-size:26px">✔</div><span>BUILD</span>', 'on', () => {
       if (!placementOK(state.ghost)) { toast('Cannot build there'); return; }
-      const d = BUILDINGS[state.ghost.type];
+      const d = bldDef('usa', state.ghost.type);
       if (state.money < d.cost) { toast('Insufficient funds'); return; }
       const dozer = state.sel.find(u => u.d.builder) || state.units.find(u => u.team === 'usa' && u.d.builder);
       if (!dozer) { toast('No dozer available'); return; }
@@ -1477,11 +1599,11 @@ function rebuildBar() {
   }
   const dozerSel = state.sel.find(u => u.d.builder);
   if (dozerSel) {
-    for (const bt of BUILD_MENU) {
-      const d = BUILDINGS[bt];
+    for (const bt of FACTIONS[state.fac.usa].menu) {
+      const d = bldDef('usa', bt);
       const locked = d.req && !state.buildings.some(b => b.team === 'usa' && b.built && b.type === d.req);
-      mkBtn(`${iconFor('usa', d.svg)}<span>${d.name}</span><span class="cost">${locked ? '🔒' : '$' + d.cost}</span>`, locked ? 'disabled' : '', () => {
-        if (locked) { toast('Requires ' + BUILDINGS[d.req].name); return; }
+      mkBtn(`${iconFor(state.fac.usa, d.svg)}<span>${d.name}</span><span class="cost">${locked ? '🔒' : '$' + d.cost}</span>`, locked ? 'disabled' : '', () => {
+        if (locked) { toast('Requires ' + bldDef('usa', d.req).name); return; }
         if (state.money < d.cost) { toast('Insufficient funds — gather supplies'); return; }
         const [wx, wy] = screenToWorld(VW / 2, VH / 2 - 60);
         state.ghost = { type: bt, x: Math.round(wx/10)*10, y: Math.round(wy/10)*10 };
@@ -1513,8 +1635,8 @@ function rebuildBar() {
   const b = state.selB;
   if (b && b.built && b.d.produce) {
     for (const ut of b.d.produce) {
-      const d = UNITS[ut];
-      const btn = mkBtn(`${iconFor('usa', d.svg)}<span>${d.name}</span><span class="cost">$${d.cost}</span>`, '', () => {
+      const d = unitDef('usa', ut);
+      const btn = mkBtn(`${iconFor(state.fac.usa, d.svg)}<span>${d.name}</span><span class="cost">$${d.cost}</span>`, '', () => {
         if (state.money < d.cost) { toast('Insufficient funds'); return; }
         if (b.queue.length >= 5) { toast('Queue full'); return; }
         state.money -= d.cost;
@@ -1528,7 +1650,7 @@ function rebuildBar() {
     if (b.queue.length) {
       mkBtn('<div style="font-size:22px">↩</div><span>REFUND</span>', '', () => {
         const ut = b.queue.pop();
-        if (ut) { state.money += UNITS[ut].cost; rebuildBar(); }
+        if (ut) { state.money += unitDef('usa', ut).cost; rebuildBar(); }
       });
     }
   }
@@ -1548,7 +1670,7 @@ const elMoney = document.getElementById('money'), elPower = document.getElementB
 function updHud() {
   elMoney.textContent = '$' + Math.floor(state.money);
   const p = powerStat();
-  elPower.textContent = '⚡' + p.use + '/' + p.gen;
+  elPower.textContent = p.na ? '⚡—' : '⚡' + p.use + '/' + p.gen;
   elPower.className = 'stat ' + (p.ok ? 'ok' : 'bad');
 }
 document.getElementById('btnArmy').addEventListener('click', () => {
@@ -1602,12 +1724,17 @@ window.addEventListener('keydown', e => {
     if (e.shiftKey) assignGroup(e.key); else recallGroup(e.key);
   }
 });
-/* difficulty picker on the deploy screen */
-document.querySelectorAll('.diff').forEach(b => b.addEventListener('click', () => {
-  difficulty = b.dataset.d;
-  document.querySelectorAll('.diff').forEach(x => x.classList.toggle('on', x === b));
-  if (state.ai) { state.ai.money = DIFFS[difficulty].start; state.ai.next = DIFFS[difficulty].first; }
-}));
+/* faction & difficulty pickers on the deploy screen — reroll the world on change */
+function wirePicker(sel, fn) {
+  document.querySelectorAll(sel).forEach(b => b.addEventListener('click', () => {
+    fn(b.dataset);
+    b.parentElement.querySelectorAll('.diff').forEach(x => x.classList.toggle('on', x === b));
+    resetGame();
+  }));
+}
+wirePicker('#facRow .diff', d => { playerFac = d.f; });
+wirePicker('#foeRow .diff', d => { enemyFac = d.e; });
+wirePicker('#diffRow .diff', d => { difficulty = d.d; });
 
 const btnBox = document.getElementById('btnBox');
 btnBox.addEventListener('click', () => { audioInit(); boxMode = !boxMode; updToggle(); if (boxMode) toast('Drag a box to select units'); });
@@ -1648,7 +1775,8 @@ document.getElementById('btnStart').addEventListener('click', () => {
   document.getElementById('overlay').style.display = 'none';
   audioInit();
   started = true;
-  toast('Select your Dozer and build a Supply Center, General');
+  toast(playerFac === 'gla' ? 'Your Workers build AND gather, General — no reactors needed'
+    : 'Select your Dozer and build a Supply Center, General');
 });
 
 /* ============================== RESET / RESTART ============================== */
@@ -1658,6 +1786,7 @@ function resetGame() {
   state.projs.length = 0; state.parts.length = 0; state.decos.length = 0;
   state.sel = []; state.selB = null;
   state.mode = null; state.ghost = null;
+  state.fac = { usa: playerFac, gla: enemyFac };
   state.ai = { money: DIFFS[difficulty].start, wave: 0, next: DIFFS[difficulty].first, think: 3 };
   state.alerts = []; state.alertT = -99;
   groups[1] = []; groups[2] = []; groups[3] = [];

@@ -11,12 +11,13 @@ Effort: S (< 1 session) · M (1–2 sessions) · L (multi-session)
 
 ## 1. Factions & Generals
 
-- [ ] 🔴 **China as a third faction** (we only have USA + GLA reskins) — hordes of cheap units,
-      horde bonus, propaganda healing, mines on buildings. (L)
-- [ ] 🔴 **Real faction asymmetry** — today both sides share identical stats/rosters:
-  - USA: expensive high-tech, drones, aircraft focus, supply drop income
-  - China: mass + firepower, slow heavy tanks, horde/nationalism bonuses
-  - GLA: cheap/fragile, **no power requirement**, scavenging, tunnels, stealth (L)
+- [x] 🔴 **China as a third faction** — cheap Red Guard hordes with +25% horde bonus, Tank
+      Hunters, Battlemasters, Gattling units, Overlord, Nuclear Reactors. ✅ M2
+      (propaganda healing & building mines still TODO)
+- [x] 🔴 **Real faction asymmetry (phase 1)** — per-faction stat tables, GLA plays with no
+      power requirement and Workers that build *and* gather, China hordes, distinct defenses
+      and costs; faction pickers for both sides on the deploy screen. ✅ M2
+      (drones/salvage/tunnels/stealth still TODO)
 - [ ] 🟡 **Zero Hour's 9 specialist Generals** (Air Force, Laser, Superweapon / Tank, Infantry,
       Nuke / Toxin, Demolition, Stealth) with modified rosters & prices. (L, late-stage)
 - [ ] 🟢 Generals Challenge mode (boss ladder vs. each general). (L)
@@ -73,8 +74,8 @@ Current: Command Center, Reactor, Barracks, Supply Center, War Factory, Patriot.
 
 ## 4. Economy
 
-- [ ] 🔴 **Faction gatherers** — USA Chinook (air gather, larger loads), China Supply Truck,
-      GLA Worker (gathers *and* builds, cheap). One truck type today. (M)
+- [x] 🔴 **Faction gatherers (phase 1)** — GLA Worker gathers *and* builds with smaller loads;
+      USA/China trucks. ✅ M2 (USA Chinook air-gather arrives with aircraft)
 - [ ] 🟡 **Secondary income** — USA Supply Drop Zone, China Hackers (+Internet Center),
       GLA Black Market trickle; capturable Oil Derricks. (M)
 - [ ] 🟡 **Accurate costs/build times** — ours are approximations; audit against real values
@@ -175,7 +176,7 @@ Entirely missing as a system (research-at-building, one-time purchases):
 
 1. ~~**M1 — "Feels like Generals"**~~ ✅ **DONE**: armor/damage matrix, veterancy, sell/repair, control groups,
    tech-tree gating, base-under-attack alerts, AI difficulty + AI base building. *(mostly S/M items)*
-2. **M2 — China + real asymmetry**: data-driven stats, China roster/buildings, GLA no-power +
+2. ~~**M2 — China + real asymmetry**~~ ✅ **DONE (phase 1)**: data-driven stats, China roster/buildings, GLA no-power +
    workers + tunnels, faction gatherers.
 3. **M3 — Air war**: airfield, 4–6 aircraft, anti-air split, Chinook gathering.
 4. **M4 — Upgrades + Generals powers + superweapons** (with countdowns).

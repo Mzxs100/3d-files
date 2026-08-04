@@ -881,6 +881,20 @@ CL0, CL1 = CX0, CXM - 6          # left block  (breast: stir fry / diced / trimm
 CR0, CR1 = CXM + 17, CX1         # right block (boneless skinless thighs, breasts)
 
 
+VALUE_TAGS = [
+        (0, CL0 + 56, "CHICKEN FOR STIR FRY", "5", "49"),
+        (0, CR0 + 56, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
+        (1, CL0 + 56, "CHICKEN BREAST BONELESS SKINLESS DICED", "5", "49"),
+        (1, CR0 + 56, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
+        (2, CL0 + 56, "CHICKEN BREAST BONELESS SKINLESS THIN CUT", "5", "49"),
+        (2, CR0 + 56, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
+        (3, CL0 + 56, "CHICKEN BREAST BONELESS SKINLESS THIN CUT", "5", "49"),
+        (3, CR0 + 56, "CHICKEN BREAST BONELESS SKINLESS FAMILY PACK", "3", "49"),
+        (4, CL0 + 56, "CHICKEN BREAST BONELESS SKINLESS VALUE PACK", "5", "49"),
+        (4, CR0 + 56, "CHICKEN BREAST BONELESS SKINLESS FAMILY PACK", "3", "49"),
+    ]
+
+
 def put(fn, x, w, shelf, h=146, back=False, tilt=None, **kw):
     y = DECK[shelf] - h - (46 if back else 0)
     a = R.uniform(-1.1, 1.1) if tilt is None else tilt
@@ -1055,19 +1069,7 @@ def build():
         BODY.append(rail(34, d + 9, 1692, 21, labels[k]))
 
     # ------------------------------------------------ tags, cards, blades ---
-    tag_l, tag_r = CL0 + 56, CR0 + 56
-    for shelf, x, desc, d1, c1 in [
-        (0, tag_l, "CHICKEN FOR STIR FRY", "5", "49"),
-        (0, tag_r, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
-        (1, tag_l, "CHICKEN BREAST BONELESS SKINLESS DICED", "5", "49"),
-        (1, tag_r, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
-        (2, tag_l, "CHICKEN BREAST BONELESS SKINLESS THIN CUT", "5", "49"),
-        (2, tag_r, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
-        (3, tag_l, "CHICKEN BREAST BONELESS SKINLESS THIN CUT", "5", "49"),
-        (3, tag_r, "CHICKEN BREAST BONELESS SKINLESS FAMILY PACK", "3", "49"),
-        (4, tag_l, "CHICKEN BREAST BONELESS SKINLESS VALUE PACK", "5", "49"),
-        (4, tag_r, "CHICKEN BREAST BONELESS SKINLESS FAMILY PACK", "3", "49"),
-    ]:
+    for shelf, x, desc, d1, c1 in VALUE_TAGS:
         FRONT.append(value_tag(x, DECK[shelf] - 30, 166, 33, d1, c1, desc))
 
     FRONT.append(blade_sign(BX1 - 96, DECK[1] - 20, 138, 50, -7))

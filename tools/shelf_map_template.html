@@ -1,0 +1,161 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fresh Poultry Case — Shelf Map</title>
+<style>
+/* Print-first: black on white, no dependence on background fills. The only
+   colour is the product art itself, which prints as content either way.   */
+@page { size: letter landscape; margin: 11mm 12mm; }
+
+:root{
+  --ink:#000; --rule:#000; --soft:#555; --hair:#bbb; --fill:#f0f0ee;
+  --sheet:#fff;
+  print-color-adjust: exact; -webkit-print-color-adjust: exact;
+}
+*{ box-sizing:border-box }
+body{
+  margin:0; background:#8d9196; color:var(--ink);
+  font:12px/1.35 ui-sans-serif,system-ui,"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+.sprite{ position:absolute; width:0; height:0; overflow:hidden }
+.num{ font-variant-numeric:tabular-nums }
+
+/* ------------------------------------------------------------- screen bar */
+.bar{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:14px;
+  padding:11px 18px; background:#16191c; color:#fff;
+}
+.bar h2{ margin:0; font-size:13px; font-weight:650; letter-spacing:-.01em }
+.bar p{ margin:0; font-size:11.5px; color:#aeb4b9; flex:1 }
+.bar button{
+  font:inherit; font-size:12px; font-weight:600; padding:7px 14px;
+  border:0; border-radius:6px; background:#f5c400; color:#16191c; cursor:pointer;
+}
+.bar button:hover{ background:#ffd426 }
+
+/* ------------------------------------------------------------- the sheets */
+.sheet{
+  width:277mm; min-height:190mm; margin:16px auto; padding:0;
+  background:var(--sheet); box-shadow:0 6px 24px rgba(0,0,0,.35);
+}
+.page{ padding:10mm 11mm; display:block }
+
+.ph{ display:flex; align-items:flex-start; gap:16px;
+     border-bottom:2px solid var(--rule); padding-bottom:6px; margin-bottom:9px }
+h1{ margin:0; font-size:19px; font-weight:750; letter-spacing:-.02em }
+h1 .of{ font-weight:400; color:var(--soft); font-size:14px }
+.sub{ margin:2px 0 0; font-size:10.5px; color:var(--soft); max-width:64ch }
+.sign{ margin-left:auto; font-size:9px; text-transform:uppercase;
+       letter-spacing:.11em; color:var(--soft); white-space:nowrap;
+       display:flex; align-items:flex-end; gap:6px }
+.sign span{ display:inline-block; width:34mm; border-bottom:1px solid var(--rule) }
+
+/* ---------------------------------------------------------- page 1: grid */
+.grid{ display:flex; flex-direction:column; gap:0; border:1.6px solid var(--rule) }
+.bayhead, .shelfrow{ display:flex; align-items:stretch }
+.bayhead{ border-bottom:1.6px solid var(--rule) }
+.bayhead .bh{
+  flex:1 1 0; padding:3px 6px; font-size:8.5px; font-weight:750;
+  text-transform:uppercase; letter-spacing:.1em; background:var(--fill);
+  border-left:1.6px solid var(--rule);
+}
+.bayhead .gut{ width:13mm; background:var(--fill) }
+
+.shelfrow{ border-top:1.6px solid var(--rule) }
+.shelfrow:first-of-type{ border-top:0 }
+.gut{
+  width:13mm; flex:none; display:flex; flex-direction:column; gap:1px;
+  align-items:center; justify-content:center; background:var(--fill);
+}
+.gut b{ font-size:20px; line-height:1; font-weight:750 }
+.gut span{ font-size:6.5px; letter-spacing:.13em; color:var(--soft) }
+
+.bay{ border-left:1.6px solid var(--rule); display:flex; flex-direction:column;
+      min-width:0; flex:1 1 0 }
+.tags{ display:flex; gap:4px; padding:2px 4px 0 }
+.tag{ font-size:7.5px; font-weight:700; border:1px solid var(--rule);
+      border-radius:2px; padding:0 3px; white-space:nowrap }
+.cells{ display:flex; flex:1; min-width:0 }
+.bay{ flex:1 1 0 }
+.cell{
+  flex:1; min-width:0; padding:3px 4px 4px;
+  border-left:1px solid var(--hair); display:flex; flex-direction:column; gap:2px;
+}
+.cell:first-child{ border-left:0 }
+.code{
+  font-size:8.5px; font-weight:750; letter-spacing:.04em;
+  border-bottom:1px solid var(--rule); padding-bottom:1px;
+  display:flex; align-items:baseline; gap:3px; flex-wrap:wrap;
+}
+.th{ display:block; width:100%; height:12mm; border:.5px solid var(--hair);
+     border-radius:2px; padding:.6mm }
+.nm{ font-size:7.5px; line-height:1.18; font-weight:600; hyphens:auto;
+     display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+     overflow:hidden }
+.meta{ font-size:6.8px; color:var(--soft); font-weight:600;
+       text-transform:uppercase; letter-spacing:.06em }
+.meta.behind{ text-transform:none; letter-spacing:0; font-weight:500 }
+
+.foot{ margin:7px 0 0; font-size:9px; color:var(--soft) }
+
+/* ------------------------------------------------- pages 2-6: shelf detail */
+.detail .dbay{ margin-bottom:7px; border:1.4px solid var(--rule) }
+.dbh{ font-size:10px; padding:3px 7px; background:var(--fill);
+      border-bottom:1.4px solid var(--rule); display:flex; gap:8px;
+      align-items:center; flex-wrap:wrap }
+.dbh b{ font-weight:750 }
+.dbh .tag{ font-size:8.5px }
+.cells.wide .cell{ padding:5px 6px 6px; gap:3px }
+.cells.wide .code{ font-size:12px }
+.cells.wide .th{ height:31mm }
+.cells.wide .nm{ font-size:9.5px; line-height:1.25; -webkit-line-clamp:4 }
+.cells.wide .meta{ font-size:8px }
+
+/* ------------------------------------------------------------ product key */
+table.key{ width:100%; border-collapse:collapse; font-size:10.5px }
+table.key thead{ display:table-header-group }
+table.key th{ text-align:left; font-size:8.5px; text-transform:uppercase;
+              letter-spacing:.1em; color:var(--soft); font-weight:750;
+              border-bottom:1.6px solid var(--rule); padding:0 6px 4px }
+table.key td{ border-bottom:1px solid var(--hair); padding:4px 6px;
+              vertical-align:middle }
+table.key .tc{ width:26mm }
+table.key .th.key{ width:24mm; height:10mm }
+table.key .g{ color:var(--soft); font-size:9.5px }
+table.key .r{ text-align:right }
+
+/* ----------------------------------------------------------------- print */
+@media print{
+  body{ background:#fff }
+  .bar{ display:none }
+  .sheet{ width:auto; min-height:0; margin:0; box-shadow:none;
+          break-after:page; page-break-after:always }
+  .sheet:last-child{ break-after:auto; page-break-after:auto }
+  .page{ padding:0 }
+  .dbay, .shelfrow, tr{ break-inside:avoid; page-break-inside:avoid }
+}
+</style>
+
+<svg class="sprite" aria-hidden="true" focusable="false">__DEFS__<defs>__SPRITE__</defs></svg>
+
+<div class="bar">
+  <h2>Shelf Map</h2>
+  <p id="barnote">Print landscape, and turn on “Background graphics” so the
+     pack drawings come out.</p>
+  <button onclick="window.print()">Print</button>
+</div>
+
+__PAGES__
+
+<script>
+/* wrap each generated section in its own sheet so screen and print agree */
+document.querySelectorAll('section.page').forEach(function(p){
+  var s = document.createElement('div');
+  s.className = 'sheet';
+  p.parentNode.insertBefore(s, p);
+  s.appendChild(p);
+});
+var n = document.querySelectorAll('.sheet').length;
+document.getElementById('barnote').textContent =
+  n + ' sheets · print landscape, and turn on “Background graphics” so the ' +
+  'pack drawings come out.';
+</script>

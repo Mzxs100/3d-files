@@ -68,7 +68,39 @@ EXTRAS = [
     ("whole_bird", {"band": "green"}, 120, 152),
 ]
 
+# A bare run of shelf at least this wide becomes an addressable empty spot,
+# so anything you can see room for is something you can drop a pack into.
+GAP_MIN = 100
+
 SLOTS = []
+
+
+def gap_slots(slots):
+    """Empty, droppable spots for the bare runs between facings."""
+    posts = [(B.AX1 + 4, B.AX1 + 20), (B.BX1 + 4, B.BX1 + 20)]
+    out = []
+    for sh in range(5):
+        front = sorted([s for s in slots if s["shelf"] == sh and not s["back"]],
+                       key=lambda d: d["x"])
+        if not front:
+            continue
+        hs = sorted(s["h"] for s in front)
+        h = hs[len(hs) // 2]
+        occ = sorted([(s["x"], s["x"] + s["w"]) for s in front] + posts)
+        free, cur = [], 34
+        for a, b in occ:
+            if a - cur > 1:
+                free.append((cur, a))
+            cur = max(cur, b)
+        if 1726 - cur > 1:
+            free.append((cur, 1726))
+        for a, b in free:
+            if b - a < GAP_MIN:
+                continue
+            out.append({"shelf": sh, "back": False, "x": round(a + 5, 1),
+                        "y": round(B.DECK[sh] - h, 1), "w": round(b - a - 10, 1),
+                        "h": round(h, 1), "tilt": 0, "cat": None})
+    return out
 
 
 def capture(fn, x, w, shelf, h=146, back=False, tilt=None, **kw):
@@ -164,6 +196,7 @@ def build_section():
                       "y": sl["y"], "w": sl["w"], "h": sl["h"],
                       "tilt": sl["tilt"],
                       "cat": hashlib.md5(key_of(sl).encode()).hexdigest()[:7]})
+    slots.extend(gap_slots(slots))
 
     bays = [{"code": "A", "label": "Signature Select",
              "limit": B.AX1 + 12, "grow": B.AX1 - B.AX0},
@@ -197,14 +230,20 @@ def case_svg(sec, cls="case"):
     p.append(sec["behind"])
     p.append('<g class="slots">')
     for i, sl in enumerate(sec["slots"]):
-        c = by_cat[sl["cat"]]
-        gid = c["gids"][i % VARIANTS]
+        c = by_cat.get(sl["cat"])
         cx, cy = sl["x"] + sl["w"] / 2, sl["y"] + sl["h"] / 2
-        p.append('<g class="slot" data-i="%d" tabindex="0" role="button" '
-                 'transform="rotate(%.2f %.1f %.1f)">' % (i, sl["tilt"], cx, cy))
-        p.append('<use href="#%s" xlink:href="#%s" transform="translate(%.1f,%.1f)'
-                 ' scale(%.4f,%.4f)"/>' % (gid, gid, sl["x"], sl["y"],
-                                           sl["w"] / c["w"], sl["h"] / c["h"]))
+        p.append('<g class="slot%s" data-i="%d" tabindex="0" role="button" '
+                 'transform="rotate(%.2f %.1f %.1f)">'
+                 % ("" if c else " empty", i, sl["tilt"], cx, cy))
+        if c:
+            gid = c["gids"][i % VARIANTS]
+            p.append('<use href="#%s" xlink:href="#%s" transform="translate(%.1f,'
+                     '%.1f) scale(%.4f,%.4f)"/>'
+                     % (gid, gid, sl["x"], sl["y"],
+                        sl["w"] / c["w"], sl["h"] / c["h"]))
+        else:
+            p.append('<use transform="translate(%.1f,%.1f)"/>'
+                     % (sl["x"], sl["y"]))
         p.append('<rect class="hit" x="%.1f" y="%.1f" width="%.1f" height="%.1f" '
                  'rx="5" fill="transparent"/>'
                  % (sl["x"], sl["y"], sl["w"], sl["h"]))

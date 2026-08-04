@@ -158,9 +158,9 @@ input[type=search]{ width:100%; padding:8px 10px; border:1px solid var(--line);
 .sheet{ background:#fff; color:#000; border:1px solid var(--line);
         border-radius:8px; padding:12mm 12mm; margin:0 0 16px;
         box-shadow:0 4px 18px rgba(0,0,0,.18) }
-.sheet h1{ margin:0; font-size:19px; font-weight:750; letter-spacing:-.02em }
+.sheet h1{ margin:0; font-size:16px; font-weight:750; letter-spacing:-.02em }
 .sheet .ph{ display:flex; align-items:flex-start; gap:16px;
-            border-bottom:2px solid #000; padding-bottom:6px; margin-bottom:9px }
+            border-bottom:2px solid #000; padding-bottom:4px; margin-bottom:6px }
 .sheet .sub{ margin:2px 0 0; font-size:10.5px; color:#555 }
 .sheet .sign{ margin-left:auto; font-size:9px; text-transform:uppercase;
               letter-spacing:.11em; color:#555; white-space:nowrap;
@@ -178,18 +178,19 @@ input[type=search]{ width:100%; padding:8px 10px; border:1px solid var(--line);
 .gut i{ font-style:normal; font-size:6.5px; letter-spacing:.13em; color:#555 }
 .shelfrow{ border-top:1.6px solid #000 }
 .shelfrow:first-of-type{ border-top:0 }
-.mcell{ flex:1 1 0; min-width:0; padding:3px 4px 4px; border-left:1px solid #bbb;
+.mcell{ flex:1 1 0; min-width:0; padding:2px 3px 3px; border-left:1px solid #bbb;
         display:flex; flex-direction:column; gap:2px }
 .mcell:first-child{ border-left:0 }
-.mcode{ font-size:8.5px; font-weight:750; letter-spacing:.04em;
-        border-bottom:1px solid #000; padding-bottom:1px; display:flex;
-        align-items:baseline; gap:3px; flex-wrap:wrap }
-.mth{ display:block; width:100%; height:12mm; border:.5px solid #bbb;
-      border-radius:2px; padding:.6mm }
-.mnm{ font-size:7.5px; line-height:1.18; font-weight:600 }
-.mmeta{ font-size:6.8px; color:#555; font-weight:600; text-transform:uppercase;
+.mcode{ font-size:7px; font-weight:750; letter-spacing:.04em; color:#333;
+        border-bottom:1px solid #000; padding-bottom:.5px }
+.mth{ display:block; width:100%; height:20mm; border:0; border-radius:2px }
+.mth.none{ border:1px dashed #999; border-radius:3px }
+.mnm{ font-size:6px; line-height:1.15; font-weight:600; color:#555;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+      overflow:hidden }
+.mmeta{ font-size:6px; color:#333; font-weight:750; text-transform:uppercase;
         letter-spacing:.06em }
-.mfoot{ margin:7px 0 0; font-size:9px; color:#555 }
+.mfoot{ margin:4px 0 0; font-size:7.5px; color:#555 }
 
 /* ----------------------------------------------------------------- print -- */
 @page{ size:letter landscape; margin:11mm 12mm }
@@ -542,8 +543,8 @@ function buildMap(){
     const c = k.c, item = c.cat ? CAT[c.cat] : null;
     let h = '<div class="mcell" style="flex-grow:' + c.w + '">' +
             '<div class="mcode">' + codeOf(k.id, k.i) + '</div>';
-    h += item ? thumb(item, 'mth') : '<div class="mth"></div>';
-    h += '<div class="mnm">' + (item ? item.short : 'Leave empty') + '</div>';
+    h += item ? thumb(item, 'mth') : '<div class="mth none"></div>';
+    h += '<div class="mnm">' + (item ? item.short : 'empty') + '</div>';
     if (c.deep > 1) h += '<div class="mmeta">' + c.deep + ' deep</div>';
     return h + '</div>';
   };

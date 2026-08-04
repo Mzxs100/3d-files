@@ -178,19 +178,17 @@ input[type=search]{ width:100%; padding:8px 10px; border:1px solid var(--line);
 .gut i{ font-style:normal; font-size:6.5px; letter-spacing:.13em; color:#555 }
 .shelfrow{ border-top:1.6px solid #000 }
 .shelfrow:first-of-type{ border-top:0 }
-.mcell{ flex:1 1 0; min-width:0; padding:2px 3px 3px; border-left:1px solid #bbb;
+.mcell{ flex:1 1 0; min-width:0; padding:2px 3px 2px; border-left:1px solid #bbb;
         display:flex; flex-direction:column; gap:2px }
 .mcell:first-child{ border-left:0 }
-.mcode{ font-size:7px; font-weight:750; letter-spacing:.04em; color:#333;
-        border-bottom:1px solid #000; padding-bottom:.5px }
-.mth{ display:block; width:100%; height:20mm; border:0; border-radius:2px }
+.mth{ display:block; width:100%; height:25mm; border:0; border-radius:2px }
 .mth.none{ border:1px dashed #999; border-radius:3px }
-.mnm{ font-size:6px; line-height:1.15; font-weight:600; color:#555;
+.mnm{ font-size:5.8px; line-height:1.12; font-weight:600; color:#555;
       display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
       overflow:hidden }
 .mmeta{ font-size:6px; color:#333; font-weight:750; text-transform:uppercase;
         letter-spacing:.06em }
-.mfoot{ margin:4px 0 0; font-size:7.5px; color:#555 }
+.mfoot{ margin:3px 0 0; font-size:7.5px; color:#555 }
 
 /* ----------------------------------------------------------------- print -- */
 @page{ size:letter landscape; margin:11mm 12mm }
@@ -541,8 +539,7 @@ function buildMap(){
 
   const cellHtml = k => {
     const c = k.c, item = c.cat ? CAT[c.cat] : null;
-    let h = '<div class="mcell" style="flex-grow:' + c.w + '">' +
-            '<div class="mcode">' + codeOf(k.id, k.i) + '</div>';
+    let h = '<div class="mcell" style="flex-grow:' + c.w + '">';
     h += item ? thumb(item, 'mth') : '<div class="mth none"></div>';
     h += '<div class="mnm">' + (item ? item.short : 'empty') + '</div>';
     if (c.deep > 1) h += '<div class="mmeta">' + c.deep + ' deep</div>';

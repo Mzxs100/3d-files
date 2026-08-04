@@ -1044,6 +1044,7 @@ def build():
          (0.739, "B/S CHICKEN BREAST", "VALUE PACK  SLU-6108"),
          (0.960, "PORK LOIN", "SLU-4410")],
     ]
+    BODY.append("<!--trim-->")
     for k in range(5):
         BODY.append(vbristle(CXM, BAND_TOP[k] + 4, DECK[k] - BAND_TOP[k] - 6))
     for k in range(5):

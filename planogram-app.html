@@ -167,9 +167,9 @@ input[type=search]{ width:100%; padding:8px 10px; border:1px solid var(--line);
               display:flex; align-items:flex-end; gap:6px }
 .sheet .sign i{ display:inline-block; width:34mm; border-bottom:1px solid #000 }
 .grid{ display:flex; flex-direction:column; border:1.6px solid #000 }
-.bayhead,.shelfrow{ display:flex; align-items:stretch }
-.bayhead{ border-bottom:1.6px solid #000 }
-.bh{ flex:1 1 0; padding:3px 6px; font-size:8.5px; font-weight:750;
+.secthead,.shelfrow{ display:flex; align-items:stretch }
+.secthead{ border-bottom:1.6px solid #000 }
+.sh{ flex:1 1 0; padding:3px 6px; font-size:8.5px; font-weight:750;
      text-transform:uppercase; letter-spacing:.1em; background:#f0f0ee;
      border-left:1.6px solid #000 }
 .gut{ width:13mm; flex:none; display:flex; flex-direction:column;
@@ -178,8 +178,7 @@ input[type=search]{ width:100%; padding:8px 10px; border:1px solid var(--line);
 .gut i{ font-style:normal; font-size:6.5px; letter-spacing:.13em; color:#555 }
 .shelfrow{ border-top:1.6px solid #000 }
 .shelfrow:first-of-type{ border-top:0 }
-.mbay{ border-left:1.6px solid #000; display:flex; min-width:0; flex:1 1 0 }
-.mcell{ flex:1; min-width:0; padding:3px 4px 4px; border-left:1px solid #bbb;
+.mcell{ flex:1 1 0; min-width:0; padding:3px 4px 4px; border-left:1px solid #bbb;
         display:flex; flex-direction:column; gap:2px }
 .mcell:first-child{ border-left:0 }
 .mcode{ font-size:8.5px; font-weight:750; letter-spacing:.04em;
@@ -191,28 +190,6 @@ input[type=search]{ width:100%; padding:8px 10px; border:1px solid var(--line);
 .mmeta{ font-size:6.8px; color:#555; font-weight:600; text-transform:uppercase;
         letter-spacing:.06em }
 .mfoot{ margin:7px 0 0; font-size:9px; color:#555 }
-.dbay{ margin-bottom:7px; border:1.4px solid #000 }
-.dbh{ font-size:10px; padding:3px 7px; background:#f0f0ee;
-      border-bottom:1.4px solid #000; display:flex; gap:8px; align-items:center;
-      flex-wrap:wrap }
-.dbh b{ font-weight:750 }
-.mbay.wide{ border-left:0 }
-.wide .mcell{ padding:5px 6px 6px; gap:3px }
-.wide .mcode{ font-size:12px }
-.wide .mth{ height:31mm }
-.wide .mnm{ font-size:9.5px; line-height:1.25 }
-.wide .mmeta{ font-size:8px }
-table.key{ width:100%; border-collapse:collapse; font-size:10.5px }
-table.key thead{ display:table-header-group }
-table.key th{ text-align:left; font-size:8.5px; text-transform:uppercase;
-              letter-spacing:.1em; color:#555; font-weight:750;
-              border-bottom:1.6px solid #000; padding:0 6px 4px }
-table.key td{ border-bottom:1px solid #bbb; padding:4px 6px;
-              vertical-align:middle }
-table.key .kth{ width:24mm; height:10mm; display:block; border:.5px solid #bbb;
-                border-radius:2px; padding:.6mm }
-table.key .g{ color:#555; font-size:9.5px }
-table.key .r{ text-align:right; font-variant-numeric:tabular-nums }
 
 /* ----------------------------------------------------------------- print -- */
 @page{ size:letter landscape; margin:11mm 12mm }
@@ -362,16 +339,16 @@ function refresh(){
   document.getElementById('undoBtn').disabled = !undo.length;
 
   const c = sel === null ? null : S.cells[sel];
-  document.getElementById('spotId').textContent =
-    c ? (c.shelf + 1) + '-' + c.bay + (c.col + 1) : '';
+  document.getElementById('spotId').textContent = c ? codeOf(cur, sel) : '';
   document.getElementById('curName').textContent =
     c ? (c.cat ? CAT[c.cat].name : 'Empty cell') : 'Nothing selected';
   const w = document.getElementById('curWhere');
   if (c){
-    const track = S.cells.filter(o => o.shelf === c.shelf && o.bay === c.bay);
+    const row = S.cells.filter(o => o.shelf === c.shelf);
+    const n = row.slice().sort((a, b) => a.x - b.x).indexOf(c) + 1;
     w.innerHTML = 'Shelf <b>' + (c.shelf + 1) + '</b> of ' + S.shelves +
-      ' &middot; Bay ' + c.bay + ' &middot; cell <b>' + (c.col + 1) + '</b> of ' +
-      track.length + ' &middot; ' + c.deep + ' deep';
+      ' &middot; cell <b>' + n + '</b> of ' + row.length +
+      ' &middot; ' + c.deep + ' deep';
   } else w.textContent = 'Click a cell in the case.';
   document.getElementById('emptyBtn').disabled = sel === null;
   document.getElementById('revertBtn').disabled =
@@ -525,82 +502,84 @@ function showView(v){
 }
 
 /* --------------------------------------------------------- the reset map */
+/* Sections sit left to right on one continuous run. The map splits that run
+   into page-wide slices, so adding sections adds sheets rather than shrinking
+   the cells to nothing.                                                     */
+/* one sheet per section-width slice, so pages break where sections do */
+const pageSpan = () => Math.max.apply(null, DATA.sections.map(S => S.w));
+const CODE = {};                 // section id -> cell code, numbered along the run
+
+function layoutRun(){
+  let ox = 0;
+  DATA.sections.forEach(S => { S.ox = ox; ox += S.w; });
+  DATA.sections.forEach(S => CODE[S.id] = new Array(S.cells.length));
+  const shelves = Math.max.apply(null, DATA.sections.map(S => S.shelves));
+  for (let sh = 0; sh < shelves; sh++){
+    let n = 0;
+    runCells(sh).forEach(k => { CODE[k.id][k.i] = (sh + 1) + '-' + (++n); });
+  }
+  return ox;
+}
+
+function runCells(sh){
+  const out = [];
+  DATA.sections.forEach(S => S.cells.forEach((c, i) => {
+    if (c.shelf === sh) out.push({ id: S.id, i: i, c: c, gx: S.ox + c.x });
+  }));
+  return out.sort((a, b) => a.gx - b.gx);
+}
+
+const codeOf = (id, i) => CODE[id] ? CODE[id][i] : '';
+
 function buildMap(){
-  const S = sec();
-  const cellHtml = c => {
-    const item = c.cat ? CAT[c.cat] : null;
-    let h = '<div class="mcell"><div class="mcode">' +
-            (c.shelf + 1) + '-' + c.bay + (c.col + 1) + '</div>';
+  const total = layoutRun();
+  const PAGE_SPAN = pageSpan();
+  const pages = Math.max(1, Math.ceil(total / PAGE_SPAN));
+  const shelves = Math.max.apply(null, DATA.sections.map(S => S.shelves));
+  const multi = DATA.sections.length > 1;
+
+  const cellHtml = k => {
+    const c = k.c, item = c.cat ? CAT[c.cat] : null;
+    let h = '<div class="mcell" style="flex-grow:' + c.w + '">' +
+            '<div class="mcode">' + codeOf(k.id, k.i) + '</div>';
     h += item ? thumb(item, 'mth') : '<div class="mth"></div>';
     h += '<div class="mnm">' + (item ? item.short : 'Leave empty') + '</div>';
     if (c.deep > 1) h += '<div class="mmeta">' + c.deep + ' deep</div>';
     return h + '</div>';
   };
-  const track = (sh, bay) => S.cells.filter(c => c.shelf === sh && c.bay === bay)
-                                    .sort((a, b) => a.col - b.col);
 
-  let h = '<div class="sheet"><div class="ph"><div><h1>' + S.name +
-          ' — Shelf Map</h1><p class="sub">Reset guide · ' + S.cells.length +
-          ' cells · ' + S.shelves + ' shelves · ' + S.bays.length +
-          ' bays. Shelf 1 is the top shelf; cells run left to right.</p>' +
-          '</div><div class="sign">Reviewed <i></i></div></div>';
-  h += '<div class="grid"><div class="bayhead"><div class="gut"></div>' +
-       S.bays.map(b => '<div class="bh" style="flex-grow:' + b.w + '">Bay ' +
-                       b.code + ' — ' + b.label + '</div>').join('') + '</div>';
-  for (let sh = 0; sh < S.shelves; sh++){
-    h += '<div class="shelfrow"><div class="gut"><b>' + (sh + 1) +
-         '</b><i>SHELF</i></div>';
-    S.bays.forEach(b => {
-      h += '<div class="mbay" style="flex-grow:' + b.w + '">' +
-           track(sh, b.code).map(cellHtml).join('') + '</div>';
-    });
-    h += '</div>';
+  let out = '';
+  for (let p = 0; p < pages; p++){
+    const lo = p * PAGE_SPAN, hi = lo + PAGE_SPAN;
+    const inPage = k => k.gx + k.c.w / 2 >= lo && k.gx + k.c.w / 2 < hi;
+    const names = DATA.sections.filter(S => S.ox + S.w > lo && S.ox < hi)
+                               .map(S => S.name);
+
+    out += '<div class="sheet"><div class="ph"><div><h1>' + names.join(' · ') +
+           ' — Shelf Map</h1><p class="sub">Reset guide · shelf 1 is the top ' +
+           'shelf; cells run left to right' +
+           (pages > 1 ? ' · sheet ' + (p + 1) + ' of ' + pages : '') +
+           '.</p></div><div class="sign">Reviewed <i></i></div></div>';
+
+    out += '<div class="grid">';
+    if (multi){
+      out += '<div class="secthead"><div class="gut"></div>';
+      DATA.sections.forEach(S => {
+        if (S.ox + S.w <= lo || S.ox >= hi) return;
+        out += '<div class="sh" style="flex-grow:' + S.w + '">' + S.name + '</div>';
+      });
+      out += '</div>';
+    }
+    for (let sh = 0; sh < shelves; sh++){
+      const cells = runCells(sh).filter(inPage);
+      out += '<div class="shelfrow"><div class="gut"><b>' + (sh + 1) +
+             '</b><i>SHELF</i></div>' + cells.map(cellHtml).join('') + '</div>';
+    }
+    out += '</div><p class="mfoot">Face every label to the front. Rotate stock ' +
+           'front to back — oldest dates forward. Leave the empty cells empty ' +
+           'unless told otherwise.</p></div>';
   }
-  h += '</div><p class="mfoot">Face every label to the front. Rotate stock ' +
-       'front to back — oldest dates forward. Leave the empty cells empty ' +
-       'unless told otherwise.</p></div>';
-
-  const named = ['Top shelf','Second shelf','Middle shelf','Fourth shelf',
-                 'Bottom shelf'];
-  for (let sh = 0; sh < S.shelves; sh++){
-    h += '<div class="sheet detail"><div class="ph"><div><h1>Shelf ' + (sh + 1) +
-         '</h1><p class="sub">' + (named[sh] || ('Shelf ' + (sh + 1))) +
-         ' &middot; ' + S.name + '</p></div>' +
-         '<div class="sign">Reviewed <i></i></div></div>';
-    S.bays.forEach(b => {
-      const cells = track(sh, b.code);
-      if (!cells.length) return;
-      h += '<div class="dbay"><div class="dbh"><b>Bay ' + b.code + '</b> ' +
-           b.label + '</div><div class="mbay wide">' +
-           cells.map(cellHtml).join('') + '</div></div>';
-    });
-    h += '</div>';
-  }
-
-  const tally = {};
-  S.cells.forEach(c => {
-    if (!c.cat || !CAT[c.cat]) return;
-    const it = CAT[c.cat];
-    const t = (tally[it.name] = tally[it.name] || { c: it, cells: 0, packs: 0 });
-    t.cells++; t.packs += c.deep;
-  });
-  const rows = Object.keys(tally).sort((a, b) => {
-    const x = tally[a].c, y = tally[b].c;
-    return x.group === y.group ? a.localeCompare(b) : x.group.localeCompare(y.group);
-  });
-  h += '<div class="sheet"><div class="ph"><div><h1>Item Key</h1>' +
-       '<p class="sub">Every item in ' + S.name + ', how many cells it holds ' +
-       'and how many packs that is.</p></div></div><table class="key"><thead>' +
-       '<tr><th></th><th>Item</th><th>Group</th><th class="r">Cells</th>' +
-       '<th class="r">Packs</th></tr></thead><tbody>';
-  rows.forEach(n => {
-    const t = tally[n];
-    h += '<tr><td>' + thumb(t.c, 'kth') + '</td><td>' + n + '</td>' +
-         '<td class="g">' + t.c.group + '</td><td class="r">' + t.cells +
-         '</td><td class="r">' + t.packs + '</td></tr>';
-  });
-  h += '</tbody></table></div>';
-  document.getElementById('mapView').innerHTML = h;
+  document.getElementById('mapView').innerHTML = out;
 }
 
 /* ------------------------------------------------------------------ wiring */
@@ -741,9 +720,8 @@ document.getElementById('jsonBtn').onclick = () => {
   const out = DATA.sections.map(S => ({
     section: S.name,
     cells: S.cells.map((c, i) => ({
-      cell: (c.shelf + 1) + '-' + c.bay + (c.col + 1),
-      shelf: c.shelf + 1, bay: c.bay, col: c.col + 1,
-      units: c.units, deep: c.deep,
+      cell: codeOf(S.id, i),
+      shelf: c.shelf + 1, units: c.units, deep: c.deep,
       item: c.cat ? CAT[c.cat].name : null,
       changed: c.cat !== ORIGINAL[S.id][i] || undefined
     }))
@@ -786,6 +764,7 @@ document.addEventListener('keydown', e => {
 });
 
 load();
+layoutRun();
 DATA.sections.forEach(s => wireSection(s.id));
 buildItems('');
 showSection(cur);

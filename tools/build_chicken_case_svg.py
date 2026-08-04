@@ -322,12 +322,13 @@ def guarantee_flash(x, y, w, h, tilt=-4):
 
 
 def sf_logo(cx, cy, w, h):
+    """Signature SELECT roundel."""
     o = [ell(cx, cy, w / 2, h / 2, fill="#15181a", opacity=".93")]
     o.append(txt(cx, cy + h * .06, "Signature",
                  size=fit(h * .42, w * .84, "Signature"), fill="#fff",
                  anchor="middle", family="Georgia, serif", style="italic"))
-    o.append(txt(cx, cy + h * .40, "FARMS", size=h * .24, fill="#cfe0a8",
-                 anchor="middle", spacing=.4))
+    o.append(txt(cx, cy + h * .40, "SELECT", size=h * .22, fill="#cfe0a8",
+                 anchor="middle", spacing=.5))
     return "".join(o)
 
 
@@ -591,8 +592,8 @@ def black_tray(x, y, w, h, kind="breast", sticker=None, sticker2=None,
         tw, th = w * .40, h * .20
         tx, ty = x + w * .54, y + h * .36
         o.append(rr(tx, ty, tw, th, 3, fill=SF_GREEN, stroke="#fff", stroke_width=".5"))
-        o.append(txt(tx + tw / 2, ty + th * .42, "Signature Farms",
-                     size=fit(th * .34, tw * .88, "Signature Farms"), fill="#fff",
+        o.append(txt(tx + tw / 2, ty + th * .42, "Signature Select",
+                     size=fit(th * .34, tw * .88, "Signature Select"), fill="#fff",
                      anchor="middle", family="Georgia, serif", style="italic"))
         o.append(txt(tx + tw / 2, ty + th * .82, "Chicken Breasts",
                      size=fit(th * .36, tw * .88, "Chicken Breasts"), fill="#fff",
@@ -661,6 +662,14 @@ def whole_bird(x, y, w, h, band="blue", rng=R):
             x + w * (.48 + .38 * i), y + h * (.24 + .30 * i)),
             fill="none", stroke="#fff", stroke_width=".9", opacity=".42"))
     bt = y + h * .70
+    if band == "plain":
+        o.append(guarantee_flash(x + w * .10, y + h * .84, w * .44, h * .10,
+                                 rng.uniform(-6, 2)))
+        o.append(oval_sticker(x + w * .74, y + h * .82, w * .40, h * .15,
+                              "GREAT ON THE", "GRILL", "#e8571f", -8))
+        o.append(scale_label(x + w * .52, y + h * .06, w * .40, h * .19, rng,
+                             rng.uniform(-3, 3)))
+        return "".join(o)
     if band == "blue":
         o.append(path("M %.1f %.1f L %.1f %.1f L %.1f %.1f L %.1f %.1f Z" % (
             x + 2, bt, x + w - 2, bt - h * .05, x + w - 2, y + h - 3, x + 2, y + h - 3),
@@ -691,7 +700,7 @@ def whole_bird(x, y, w, h, band="blue", rng=R):
     return "".join(o)
 
 
-def heritage_tub(x, y, w, h, rng=R):
+def heritage_tub(x, y, w, h, rng=R, price=True):
     """Heritage shaved chicken breast: white tub with a dark printed sleeve."""
     o = [shadow(x, y + h + 4, w)]
     o.append(rr(x, y + h - 4, w, 12, 4, fill="#e0e0dc"))
@@ -716,12 +725,13 @@ def heritage_tub(x, y, w, h, rng=R):
                  weight="700"))
     o.append(film(x + 2, y + 2, w - 4, h * .68, rng, 6, ".15"))
     o.append(scale_label(x + w * .05, y + h * .70, w * .50, h * .24, rng, -1))
-    o.append(rr(x + w * .60, y + h * .70, w * .35, h * .24, 2, fill="#fff",
-                stroke="#cfcfc9", stroke_width=".5"))
-    o.append(txt(x + w * .86, y + h * .90, "6", size=h * .20, fill="#111",
-                 weight="800", anchor="end"))
-    o.append(txt(x + w * .875, y + h * .82, "99", size=h * .10, fill="#111",
-                 weight="800"))
+    if price:
+        o.append(rr(x + w * .60, y + h * .70, w * .35, h * .24, 2, fill="#fff",
+                    stroke="#cfcfc9", stroke_width=".5"))
+        o.append(txt(x + w * .86, y + h * .90, "6", size=h * .20, fill="#111",
+                     weight="800", anchor="end"))
+        o.append(txt(x + w * .875, y + h * .82, "99", size=h * .10, fill="#111",
+                     weight="800"))
     return "".join(o)
 
 
@@ -828,6 +838,22 @@ def bristle(x, y, w, h=9):
     return "".join(o)
 
 
+def vbristle(x, y, h, w=11):
+    """Vertical brush strip used between merchandising blocks."""
+    o = [rr(x, y, w, h, 1, fill="#0a0a0b")]
+    for i in range(int(h / 3.2)):
+        by = y + i * 3.2 + R.uniform(-.7, .7)
+        o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#3d4145" '
+                 'stroke-width="1.0" opacity="%.2f"/>' % (
+                     x, by, x + w + R.uniform(2, 7), by + R.uniform(-2.2, 2.2),
+                     R.uniform(.45, .95)))
+        o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#3d4145" '
+                 'stroke-width="1.0" opacity="%.2f"/>' % (
+                     x + w, by, x - R.uniform(2, 7), by + R.uniform(-2.2, 2.2),
+                     R.uniform(.45, .95)))
+    return "".join(o)
+
+
 def spread(x0, x1, n, gap=8):
     w = ((x1 - x0) - gap * (n - 1)) / n
     return [(x0 + i * (w + gap), w) for i in range(n)]
@@ -850,6 +876,9 @@ DECK = [t + 176 for t in BAND_TOP]
 AX0, AX1 = 44, 604
 BX0, BX1 = 622, 1128
 CX0, CX1 = 1146, 1716
+CXM = 1428                       # brush divider between the $5.49 and $3.49 blocks
+CL0, CL1 = CX0, CXM - 6          # left block  (breast: stir fry / diced / trimmed)
+CR0, CR1 = CXM + 17, CX1         # right block (boneless skinless thighs, breasts)
 
 
 def put(fn, x, w, shelf, h=146, back=False, tilt=None, **kw):
@@ -863,13 +892,13 @@ def build():
     # ---------------------------------------------------------- shelf 1 ----
     s = 0
     names = [("Chicken Breast|Tenders", "tender"),
-             ("Chicken Wing|Drumettes", "drumette"),
-             ("Chicken Wing|Drumettes", "drumette")]
+             ("Chicken Wing|Drummettes", "drumette"),
+             ("Chicken Wing|Drummettes", "drumette")]
     for i, (x, w) in enumerate(spread(AX0 + 10, AX0 + 442, 3, 10)):
         put(sf_yellow, x, w, s, 132, back=True, name=names[i][0], kind=names[i][1])
     for i, (x, w) in enumerate(spread(AX0, AX0 + 452, 3, 12)):
         put(sf_yellow, x, w, s, 146, name=names[i][0], kind=names[i][1])
-    put(heritage_tub, AX0 + 456, 100, s, 122, back=True)
+    put(heritage_tub, AX0 + 456, 100, s, 122, back=True, price=False)
     put(heritage_tub, BX0 + 2, 132, s, 144)
     for x, w in spread(BX0 + 148, BX0 + 352, 2, 12):
         put(pulp_tray, x, w, s, 132)
@@ -881,12 +910,15 @@ def build():
         BODY.append(rr(ex + 4, DECK[s] - 52 + i * 13, BX1 - ex - 8, 2.5, 1,
                        fill="#1c1f21"))
     BODY.append(bristle(ex, DECK[s] - 5, BX1 - ex, 7))
-    for i, (x, w) in enumerate(spread(CX0 + 8, CX1 - 8, 4, 14)):
-        put(black_tray, x, w, s, 140,
-            kind=["dice", "dice", "thigh", "thigh"][i],
-            count=1.05 if i < 2 else 10,
-            red_label=None if i < 2 else ("BONELESS SKINLESS", "CHICKEN THIGHS"),
-            sticker=("Stir Fry", None, "#e8571f") if i < 2 else None)
+    for i, (x, w) in enumerate(spread(CL0 + 10, CL1, 2, 14)):
+        put(black_tray, x, w, s, 96 + 8 * i, kind="tender", count=8,
+            sticker=("Prepared for", "STIR FRY", "#d8261f") if i else None)
+    for x, w in spread(CR0 + 10, CR1, 2, 14):
+        put(black_tray, x, w, s, 128, back=True, kind="thigh", count=10,
+            red_label=("BONELESS SKINLESS", "CHICKEN THIGHS"))
+    for x, w in spread(CR0, CR1 - 10, 2, 16):
+        put(black_tray, x, w, s, 140, kind="thigh", count=10,
+            red_label=("BONELESS SKINLESS", "CHICKEN THIGHS"))
 
     # ---------------------------------------------------------- shelf 2 ----
     s = 1
@@ -898,52 +930,54 @@ def build():
         put(oo_blue, x, w, s, 132, back=True)
     for x, w in spread(BX0, BX1 - 52, 3, 14):
         put(oo_blue, x, w, s, 146)
-    for i, (x, w) in enumerate(spread(CX0, CX1, 5, 10)):
-        put(black_tray, x, w, s, 146,
-            kind=["dice", "dice", "thigh", "thigh", "thigh"][i],
-            count=1.0 if i < 2 else 10,
-            sticker=("FRY", "SAUTÉ") if i < 2 else None,
-            red_label=None if i < 2 else ("BONELESS SKINLESS", "CHICKEN THIGHS"))
+    for x, w in spread(CL0 + 10, CL1, 2, 14):
+        put(black_tray, x, w, s, 130, back=True, kind="dice", count=1.0,
+            sticker=("FRY", "SAUTÉ"))
+    for x, w in spread(CL0, CL1 - 10, 2, 16):
+        put(black_tray, x, w, s, 144, kind="dice", count=1.0,
+            sticker=("FRY", "SAUTÉ"))
+    for x, w in spread(CR0 + 10, CR1, 2, 14):
+        put(black_tray, x, w, s, 130, back=True, kind="thigh", count=10,
+            red_label=("BONELESS SKINLESS", "CHICKEN THIGHS"))
+    for x, w in spread(CR0, CR1 - 10, 2, 16):
+        put(black_tray, x, w, s, 144, kind="thigh", count=10,
+            red_label=("BONELESS SKINLESS", "CHICKEN THIGHS"))
 
     # ---------------------------------------------------------- shelf 3 ----
     s = 2
     put(black_tray, AX0 - 10, 104, s, 142, kind="beef", count=2)
     put(sf_green, AX0 + 104, 132, s, 148, kind="thigh",
         label="Boneless Skinless|Chicken Thighs")
-    for x, w in spread(AX0 + 254, AX1 + 6, 3, 10):
-        put(sf_green, x, w, s, 134, back=True, kind="drumstick")
     for x, w in spread(AX0 + 246, AX1, 3, 12):
-        put(sf_green, x, w, s, 148, kind="drumstick")
+        put(sf_green, x, w, s, 152, kind="drumstick")
     for x, w in spread(BX0 + 8, BX1 - 40, 3, 12):
         put(on_green, x, w, s, 132, back=True)
     for x, w in spread(BX0, BX1 - 52, 3, 14):
         put(on_green, x, w, s, 146)
-    for i, (x, w) in enumerate(spread(CX0, CX1, 5, 10)):
-        put(black_tray, x, w, s, 146,
-            kind=["breast", "breast", "breast", "thigh", "thigh"][i],
-            count=6 if i < 3 else 10,
-            sticker=("Hand", "Trimmed") if i < 3 else None,
-            sticker2=("THIN CUT",) if i < 2 else None,
-            red_label=None if i < 3 else ("BONELESS SKINLESS", "CHICKEN THIGHS"))
+    for x, w in spread(CL0, CL1, 2, 16):
+        put(black_tray, x, w, s, 146, kind="breast", count=6,
+            sticker=("Hand", "Trimmed"), sticker2=("THIN CUT",))
+    for x, w in spread(CR0, CR1, 2, 16):
+        put(black_tray, x, w, s, 146, kind="thigh", count=10,
+            red_label=("BONELESS SKINLESS", "CHICKEN THIGHS"))
 
     # ---------------------------------------------------------- shelf 4 ----
     s = 3
     put(black_tray, AX0 - 10, 100, s, 140, kind="pork",
         sticker=("FRESH", "PORK", "#d2431f"))
-    for i, (x, w) in enumerate(spread(AX0 + 102, AX1, 4, 10)):
-        put(sf_green, x, w, s, 148, kind="thigh",
-            label="Chicken Thighs" if i < 2 else None)
+    put(sf_green, AX0 + 102, 122, s, 148, kind="thigh", label="Bone-In|Chicken Thighs")
+    for x, w in spread(AX0 + 236, AX1, 3, 12):
+        put(sf_green, x, w, s, 152, kind="thigh")
     for x, w in spread(BX0, BX0 + 322, 3, 12):
         put(on_green, x, w, s, 146)
     for x, w in spread(BX0 + 338, BX1, 2, 12):
         put(black_tray, x, w, s, 146, kind="breast", count=6,
             sticker=("Hand", "Trimmed"))
-    for i, (x, w) in enumerate(spread(CX0, CX1, 5, 10)):
-        put(black_tray, x, w, s, 146,
-            kind=["breast", "breast", "breast", "thigh", "thigh"][i],
-            count=6 if i < 3 else 10,
-            sticker=("Hand", "Trimmed") if i < 2 else None,
-            sf_tag=(i >= 3))
+    for x, w in spread(CL0, CL1, 2, 16):
+        put(black_tray, x, w, s, 146, kind="breast", count=6,
+            sticker=("Hand", "Trimmed"))
+    for x, w in spread(CR0, CR1, 2, 16):
+        put(black_tray, x, w, s, 146, kind="breast", count=6, sf_tag=True)
 
     # ---------------------------------------------------------- shelf 5 ----
     s = 4
@@ -951,56 +985,67 @@ def build():
     put(black_tray, slots[0][0], slots[0][1], s, 150, kind="beef", count=3,
         sticker=("THIN CUT", None, "#e8571f"))
     for x, w in slots[1:3]:
-        put(whole_bird, x, w, s, 150, band="green")
-    put(black_tray, slots[3][0], slots[3][1], s, 104, kind="dice", count=1.15,
-        sticker=("FRY", "SAUTÉ"))
-    put(whole_bird, slots[4][0], slots[4][1], s, 150, band="green")
+        put(whole_bird, x, w, s, 150, band="plain")
+    put(whole_bird, slots[4][0], slots[4][1], s, 150, band="plain")
+    put(whole_bird, slots[3][0], slots[3][1], s, 150, band="plain")
+    put(black_tray, slots[3][0] - 6, slots[3][1] + 12, s, 92, back=True,
+        kind="dice", count=1.15, sticker=("FRY", "SAUTÉ"))
+    for x, w in place(BX0 + 6, [108, 108], 8):
+        put(whole_bird, x, w, s, 136, back=True, band="blue")
     for x, w in place(BX0, [112, 112], 8):
         put(whole_bird, x, w, s, 152, band="blue")
-    put(black_tray, BX0 + 244, 124, s, 100, kind="dice", count=1.1,
+    for x, w in place(BX0 + 252, [120, 120], 12):
+        put(whole_bird, x, w, s, 152, band="green")
+    put(black_tray, BX0 + 288, 122, s, 86, back=True, kind="dice", count=1.1,
         sticker=("FRY", "SAUTÉ"))
-    put(whole_bird, BX0 + 380, 112, s, 150, band="green")
-    for i, (x, w) in enumerate(spread(CX0, CX1 - 128, 4, 10)):
-        put(black_tray, x, w, s, 150,
-            kind=["breast", "breast", "dice", "breast"][i],
-            count=1.1 if i == 2 else 6,
-            sticker=("FRY", "SAUTÉ") if i == 2 else ("Hand", "Trimmed"))
+    for x, w in spread(CL0, CL1, 2, 16):
+        put(black_tray, x, w, s, 150, kind="breast", count=6,
+            sticker=("Hand", "Trimmed"))
+    put(black_tray, CL0 + 66, 140, s, 88, back=True, kind="dice", count=1.15,
+        sticker=("FRY", "SAUTÉ"))
+    put(black_tray, CR0, 132, s, 150, kind="breast", count=6, sf_tag=True)
+    gx = CR0 + 146
+    BODY.append(rr(gx, DECK[s] - 66, CX1 - 122 - gx, 66, 3, fill="#0c0d0f"))
+    for i in range(int((CX1 - 122 - gx) / 13)):
+        BODY.append(rr(gx + 6 + i * 13, DECK[s] - 58, 2.5, 54, 1, fill="#1c1f21"))
     put(black_tray, CX1 - 116, 116, s, 150, kind="pork", count=5,
         sticker=("PORK LOIN", None, "#8e2246"))
 
     # ------------------------------------------------------- shelf trim ----
     labels = [
-        [(0.055, "SF CHICKEN", "TENDERLOINS  7104"),
-         (0.185, "SF CHICKEN", "DRUMETTES  7004"),
-         (0.300, "SF SMALL", "CHICKEN WINGS  7005"),
-         (0.430, "RBF B/S CHICKEN", "BREASTS  5804"),
-         (0.700, "CHICKEN BREAST", "FOR STIR FRY  6181"),
-         (0.885, "BULK B/S THIGHS", "6244")],
-        [(0.115, "SF CHICKEN", "BREASTS  7014"),
-         (0.300, "SF SMALL", "CHICKEN WINGS  7005"),
-         (0.440, "OO B/S CHICKEN", "THIGHS  5218"),
-         (0.595, "OO CHICKEN", "TENDERLOIN  5240"),
-         (0.735, "CHICKEN BREAST", "DICED  6180"),
-         (0.905, "BULK B/S THIGHS", "6244")],
-        [(0.075, "SF B/S CHICKEN", "THIGHS  7024"),
-         (0.255, "SF FP CHICKEN", "DRUMSTICKS  7044"),
-         (0.455, "ON B/S CHICKEN", "BREASTS  5502"),
-         (0.620, "ON CHICKEN", "TENDERS  5510"),
-         (0.780, "B/S CHICKEN BREAST", "THIN CUT  6120"),
-         (0.930, "BULK B/S THIGHS", "6244")],
-        [(0.115, "SF CHICKEN", "THIGHS  7034"),
-         (0.300, "SF FP CHICKEN", "THIGHS  7038"),
-         (0.450, "ON B/S CHICKEN", "BREASTS  5502"),
-         (0.610, "ON B/S CHICKEN", "BREAST  5504"),
-         (0.790, "B/S CHICKEN BREAST", "FAMILY PACK  6110"),
-         (0.930, "SF CHICKEN", "BREASTS  7016")],
-        [(0.105, "FP CUT CHICKEN", "7050"),
-         (0.285, "SF WHOLE FRYERS", "7805"),
-         (0.450, "OO WHOLE FRYER", "CHICKEN  5224"),
-         (0.620, "SF WHOLE FRYERS", "7805"),
-         (0.800, "B/S CHICKEN BREAST", "VALUE PACK  6108"),
-         (0.930, "PORK LOIN", "4410")],
+        [(0.055, "SF CHICKEN", "TENDERLOINS  SLU-7064"),
+         (0.185, "SF CHICKEN", "DRUMETTES  SLU-7004"),
+         (0.300, "SF SMALL", "CHICKEN WINGS  SLU-7001"),
+         (0.430, "RBF B/S CHICKEN", "BREASTS  SLU-5814"),
+         (0.739, "CHICKEN BREAST", "FOR STIR FRY  SLU-691"),
+         (0.912, "BULK B/S THIGHS", "SLU-6244")],
+        [(0.115, "SF CHICKEN", "BREASTS  SLU-7014"),
+         (0.300, "SF SMALL", "CHICKEN WINGS  SLU-7001"),
+         (0.440, "OO B/S CHICKEN", "THIGHS  SLU-5218"),
+         (0.595, "OO CHICKEN", "TENDERLOIN  SLU-5240"),
+         (0.739, "CHICKEN BREAST", "DICED  SLU-6099"),
+         (0.912, "BULK B/S THIGHS", "SLU-6244")],
+        [(0.075, "SF B/S CHICKEN", "THIGHS  SLU-7024"),
+         (0.255, "SF FP CHICKEN", "DRUMSTICKS  SLU-7044"),
+         (0.455, "ON B/S CHICKEN", "BREASTS  SLU-5502"),
+         (0.620, "ON CHICKEN", "TENDERS  SLU-5510"),
+         (0.739, "B/S CHICKEN BREAST", "THIN CUT  SLU-6120"),
+         (0.912, "BULK B/S THIGHS", "SLU-6244")],
+        [(0.075, "BEEF BONES", "SLU-3310"),
+         (0.255, "SF FP CHICKEN", "DRUMS  SLU-7048"),
+         (0.455, "ON B/S CHICKEN", "BREASTS  SLU-5502"),
+         (0.620, "ON B/S CHICKEN", "BREAST  SLU-5504"),
+         (0.739, "HAND TRIMMED", "THIN CUT  SLU-6118"),
+         (0.912, "B/S CHICKEN BREAST", "FAMILY PACK  SLU-6110")],
+        [(0.105, "FP CUT CHICKEN", "SLU-7050"),
+         (0.285, "SF WHOLE FRYERS", "SLU-7805"),
+         (0.450, "OO WHOLE FRYER", "CHICKEN  SLU-5224"),
+         (0.620, "SF WHOLE FRYERS", "SLU-7805"),
+         (0.739, "B/S CHICKEN BREAST", "VALUE PACK  SLU-6108"),
+         (0.960, "PORK LOIN", "SLU-4410")],
     ]
+    for k in range(5):
+        BODY.append(vbristle(CXM, BAND_TOP[k] + 4, DECK[k] - BAND_TOP[k] - 6))
     for k in range(5):
         d = DECK[k]
         BODY.append(bristle(34, d - 5, 1692, 7))
@@ -1009,17 +1054,18 @@ def build():
         BODY.append(rail(34, d + 9, 1692, 21, labels[k]))
 
     # ------------------------------------------------ tags, cards, blades ---
+    tag_l, tag_r = CL0 + 56, CR0 + 56
     for shelf, x, desc, d1, c1 in [
-        (0, CX0 + 34, "CHICKEN FOR STIR FRY", "5", "49"),
-        (0, CX0 + 322, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
-        (1, CX0 + 34, "CHICKEN BREAST B/S DICED", "5", "49"),
-        (1, CX0 + 322, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
-        (2, CX0 + 34, "B/S CHICKEN BREAST THIN CUT", "5", "49"),
-        (2, CX0 + 322, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
-        (3, CX0 + 34, "CHICKEN BREAST B/S FAMILY PACK", "5", "49"),
-        (3, CX0 + 322, "SF CHICKEN BREASTS VALUE PACK", "3", "49"),
-        (4, CX0 + 34, "B/S CHICKEN BREAST VALUE PACK", "5", "49"),
-        (4, CX0 + 322, "CHICKEN BREAST TENDERLOINS", "5", "49"),
+        (0, tag_l, "CHICKEN FOR STIR FRY", "5", "49"),
+        (0, tag_r, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
+        (1, tag_l, "CHICKEN BREAST BONELESS SKINLESS DICED", "5", "49"),
+        (1, tag_r, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
+        (2, tag_l, "CHICKEN BREAST BONELESS SKINLESS THIN CUT", "5", "49"),
+        (2, tag_r, "CHICKEN THIGH BONELESS SKINLESS", "3", "49"),
+        (3, tag_l, "CHICKEN BREAST BONELESS SKINLESS THIN CUT", "5", "49"),
+        (3, tag_r, "CHICKEN BREAST BONELESS SKINLESS FAMILY PACK", "3", "49"),
+        (4, tag_l, "CHICKEN BREAST BONELESS SKINLESS VALUE PACK", "5", "49"),
+        (4, tag_r, "CHICKEN BREAST BONELESS SKINLESS FAMILY PACK", "3", "49"),
     ]:
         FRONT.append(value_tag(x, DECK[shelf] - 30, 166, 33, d1, c1, desc))
 
@@ -1027,8 +1073,8 @@ def build():
     FRONT.append(blade_sign(AX1 - 26, DECK[2] - 18, 138, 50, 6))
     FRONT.append(on_blade(BX1 - 118, DECK[2] - 16, 140, 42, 5))
     FRONT.append(blade_sign(BX0 + 34, DECK[3] - 20, 138, 50, -6))
-    FRONT.append(price_card(AX0 + 214, DECK[2] - 42, 112, 44, "1", "39"))
-    FRONT.append(price_card(AX0 + 214, DECK[3] - 42, 112, 44, "1", "39"))
+    FRONT.append(price_card(AX0 + 276, DECK[2] - 42, 112, 44, "1", "39"))
+    FRONT.append(price_card(AX0 + 268, DECK[3] - 42, 112, 44, "1", "39"))
 
 
 def defs():

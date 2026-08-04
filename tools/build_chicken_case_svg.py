@@ -907,7 +907,7 @@ def build():
     for i, (x, w) in enumerate(spread(AX0, AX0 + 452, 3, 12)):
         put(sf_yellow, x, w, s, 146, name=names[i][0], kind=names[i][1])
     put(heritage_tub, AX0 + 456, 100, s, 122, back=True, price=False)
-    put(heritage_tub, BX0 + 2, 132, s, 144)
+    put(heritage_tub, BX0 + 2, 132, s, 144, price=False)
     for x, w in spread(BX0 + 148, BX0 + 352, 2, 12):
         put(pulp_tray, x, w, s, 132)
     ex = BX0 + 366
@@ -996,21 +996,15 @@ def build():
         put(whole_bird, x, w, s, 150, band="plain")
     put(whole_bird, slots[4][0], slots[4][1], s, 150, band="plain")
     put(whole_bird, slots[3][0], slots[3][1], s, 150, band="plain")
-    put(black_tray, slots[3][0] - 6, slots[3][1] + 12, s, 92, back=True,
-        kind="dice", count=1.15, sticker=("FRY", "SAUTÉ"))
     for x, w in place(BX0 + 6, [108, 108], 8):
         put(whole_bird, x, w, s, 136, back=True, band="blue")
     for x, w in place(BX0, [112, 112], 8):
         put(whole_bird, x, w, s, 152, band="blue")
     for x, w in place(BX0 + 252, [120, 120], 12):
         put(whole_bird, x, w, s, 152, band="green")
-    put(black_tray, BX0 + 288, 122, s, 86, back=True, kind="dice", count=1.1,
-        sticker=("FRY", "SAUTÉ"))
     for x, w in spread(CL0, CL1, 2, 16):
         put(black_tray, x, w, s, 150, kind="breast", count=6,
             sticker=("Hand", "Trimmed"))
-    put(black_tray, CL0 + 66, 140, s, 88, back=True, kind="dice", count=1.15,
-        sticker=("FRY", "SAUTÉ"))
     put(black_tray, CR0, 132, s, 150, kind="breast", count=6, sf_tag=True)
     gx = CR0 + 146
     BODY.append(rr(gx, DECK[s] - 66, CX1 - 122 - gx, 66, 3, fill="#0c0d0f"))
@@ -1030,18 +1024,9 @@ def build():
         BODY.append(rr(34, d, 1692, 1.6, 0, fill="#7e858b", opacity=".5"))
         BODY.append(rail(34, d + 9, 1692, 21))
 
-    # ------------------------------------------------ tags, cards, blades ---
-    for shelf, x, desc, d1, c1 in VALUE_TAGS:
-        FRONT.append(value_tag(x, DECK[shelf] - 30, 166, 33, d1, c1, desc))
-
-    FRONT.append(blade_sign(BX1 - 96, DECK[1] - 20, 138, 50, -7))
-    FRONT.append(blade_sign(AX1 - 26, DECK[2] - 18, 138, 50, 6))
-    FRONT.append(on_blade(BX1 - 118, DECK[2] - 16, 140, 42, 5))
-    FRONT.append(blade_sign(BX0 + 34, DECK[3] - 20, 138, 50, -6))
-    FRONT.append(price_card(AX0 + 276, DECK[2] - 42, 112, 44, "1", "39"))
-    FRONT.append(price_card(AX0 + 268, DECK[3] - 42, 112, 44, "1", "39"))
-
-
+    # Signage is deliberately not drawn: the tickets, blade signs and price
+    # cards all sat over the product. VALUE_TAGS is kept as data so the reset
+    # map can still name each price block.
 def defs():
     d = ['<defs>']
     for gid, c0, c1 in [

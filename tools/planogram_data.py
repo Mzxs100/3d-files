@@ -57,6 +57,17 @@ NAMES = {
 SHORT = [("Signature Select", "SS"), ("Boneless skinless", "B/S"),
          ("boneless skinless", "b/s"), (" value pack", " value pk")]
 
+# Items the bar always carries, whether or not they are on the shelf today.
+# Add a tuple here and it shows up in the app ready to drop onto any spot.
+EXTRAS = [
+    ("sf_yellow", {"name": "Chicken|Wings", "kind": "wing"}, 148, 148),
+    ("sf_green", {"kind": "breast", "label": "Chicken|Breasts"}, 132, 148),
+    ("black_tray", {"kind": "dice", "count": 1.15,
+                    "sticker": ("FRY", "SAUTÉ")}, 132, 104),
+    ("black_tray", {"kind": "tender", "count": 10}, 110, 140),
+    ("whole_bird", {"band": "green"}, 120, 152),
+]
+
 SLOTS = []
 
 
@@ -120,6 +131,14 @@ def build_section():
         cats.setdefault(k, sl)
         sizes.setdefault(k, {}).setdefault((sl["w"], sl["h"]), 0)
         sizes[k][(sl["w"], sl["h"])] += 1
+
+    for fn, kw, w, h in EXTRAS:
+        sl = {"fn": fn, "kw": kw}
+        k = key_of(sl)
+        if k in cats:
+            continue
+        cats[k] = sl
+        sizes[k] = {(w, h): 1}
 
     defs, catalog = [], []
     for k, sl in cats.items():

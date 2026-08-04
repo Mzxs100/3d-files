@@ -42,7 +42,7 @@ def main():
                       "cells": [{k: c[k] for k in
                                  ("shelf", "bay", "col", "units", "deep",
                                   "cat", "x", "y", "w", "h")} for c in s["cells"]],
-                      "slots": s["slots"], "bays": s["bays"], "tags": s["tags"],
+                      "slots": s["slots"], "bays": s["bays"],
                       "shelves": s["shelves"], "w": s["w"], "h": s["h"]}
                      for s in built],
     }

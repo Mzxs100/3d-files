@@ -185,8 +185,6 @@ input[type=search]{ width:100%; padding:8px 10px; border:1px solid var(--line);
 .mcode{ font-size:8.5px; font-weight:750; letter-spacing:.04em;
         border-bottom:1px solid #000; padding-bottom:1px; display:flex;
         align-items:baseline; gap:3px; flex-wrap:wrap }
-.mtag{ font-size:7.5px; font-weight:700; border:1px solid #000; border-radius:2px;
-       padding:0 3px; white-space:nowrap }
 .mth{ display:block; width:100%; height:12mm; border:.5px solid #bbb;
       border-radius:2px; padding:.6mm }
 .mnm{ font-size:7.5px; line-height:1.18; font-weight:600 }
@@ -527,19 +525,12 @@ function showView(v){
 }
 
 /* --------------------------------------------------------- the reset map */
-function tagsFor(c){
-  return sec().tags.filter(t => t.shelf === c.shelf && t.x < c.x + c.w &&
-                                t.x + t.w > c.x);
-}
-
 function buildMap(){
   const S = sec();
   const cellHtml = c => {
     const item = c.cat ? CAT[c.cat] : null;
     let h = '<div class="mcell"><div class="mcode">' +
-            (c.shelf + 1) + '-' + c.bay + (c.col + 1) +
-            tagsFor(c).map(t => '<span class="mtag">' + t.price + '</span>').join('') +
-            '</div>';
+            (c.shelf + 1) + '-' + c.bay + (c.col + 1) + '</div>';
     h += item ? thumb(item, 'mth') : '<div class="mth"></div>';
     h += '<div class="mnm">' + (item ? item.short : 'Leave empty') + '</div>';
     if (c.deep > 1) h += '<div class="mmeta">' + c.deep + ' deep</div>';
@@ -579,16 +570,9 @@ function buildMap(){
     S.bays.forEach(b => {
       const cells = track(sh, b.code);
       if (!cells.length) return;
-      const seen = [], tags = [];
-      cells.forEach(c => tagsFor(c).forEach(t => {
-        const k = t.price + t.desc;
-        if (seen.indexOf(k) < 0){ seen.push(k); tags.push(t); }
-      }));
       h += '<div class="dbay"><div class="dbh"><b>Bay ' + b.code + '</b> ' +
-           b.label + tags.map(t => ' <span class="mtag">' + t.price + ' ' +
-                                   t.desc + '</span>').join('') + '</div>' +
-           '<div class="mbay wide">' + cells.map(cellHtml).join('') +
-           '</div></div>';
+           b.label + '</div><div class="mbay wide">' +
+           cells.map(cellHtml).join('') + '</div></div>';
     });
     h += '</div>';
   }

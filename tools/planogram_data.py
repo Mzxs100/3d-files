@@ -277,12 +277,9 @@ def build_section():
              "w": B.BX1 - B.BX0},
             {"code": "C", "label": "Value and Quality bulk", "x": B.CX0,
              "w": B.CX1 - B.CX0}]
-    tags = [{"shelf": sh, "x": tx, "w": 166, "price": "$%s.%s/lb" % (d, c),
-             "desc": desc} for sh, tx, desc, d, c in B.VALUE_TAGS]
-
     return {"cells": cells, "slots": slots, "catalog": catalog,
             "defs": "".join(defs), "behind": behind, "trim": trim,
-            "front": front, "bays": bays, "tags": tags, "shelves": 5,
+            "front": front, "bays": bays, "shelves": 5,
             "w": B.W, "h": B.H}
 
 

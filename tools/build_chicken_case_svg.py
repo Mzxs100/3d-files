@@ -813,17 +813,11 @@ def price_card(x, y, w, h, big, cents):
     return "".join(o)
 
 
-def rail(x, y, w, h, labels):
+def rail(x, y, w, h):
+    """Shelf-edge trim. The SLU label strips are deliberately left off."""
     o = [rr(x, y, w, h, 1.5, fill="url(#rail)", stroke="#000", stroke_width=".6")]
     o.append(rr(x, y, w, 1.2, 0, fill="#5c6166", opacity=".65"))
-    for frac, l1, l2 in labels:
-        lx = x + w * frac
-        o.append(rr(lx - 36, y + 2.5, 72, h - 5, 1, fill="#0a0a0b",
-                    stroke="#3a3d40", stroke_width=".5"))
-        o.append(txt(lx, y + h * .46, l1, size=fit(4.9, 68, l1), fill="#f2f2f0",
-                     weight="700", anchor="middle", spacing=.2))
-        o.append(txt(lx, y + h * .80, l2, size=fit(4.2, 68, l2), fill="#b9bcbe",
-                     anchor="middle", spacing=.15))
+    o.append(rr(x, y + h - 1.4, w, 1.4, 0, fill="#000", opacity=".5"))
     return "".join(o)
 
 
@@ -1026,38 +1020,6 @@ def build():
         sticker=("PORK LOIN", None, "#8e2246"))
 
     # ------------------------------------------------------- shelf trim ----
-    labels = [
-        [(0.055, "SF CHICKEN", "TENDERLOINS  SLU-7064"),
-         (0.185, "SF CHICKEN", "DRUMETTES  SLU-7004"),
-         (0.300, "SF SMALL", "CHICKEN WINGS  SLU-7001"),
-         (0.430, "RBF B/S CHICKEN", "BREASTS  SLU-5814"),
-         (0.739, "CHICKEN BREAST", "FOR STIR FRY  SLU-691"),
-         (0.912, "BULK B/S THIGHS", "SLU-6244")],
-        [(0.115, "SF CHICKEN", "BREASTS  SLU-7014"),
-         (0.300, "SF SMALL", "CHICKEN WINGS  SLU-7001"),
-         (0.440, "OO B/S CHICKEN", "THIGHS  SLU-5218"),
-         (0.595, "OO CHICKEN", "TENDERLOIN  SLU-5240"),
-         (0.739, "CHICKEN BREAST", "DICED  SLU-6099"),
-         (0.912, "BULK B/S THIGHS", "SLU-6244")],
-        [(0.075, "SF B/S CHICKEN", "THIGHS  SLU-7024"),
-         (0.255, "SF FP CHICKEN", "DRUMSTICKS  SLU-7044"),
-         (0.455, "ON B/S CHICKEN", "BREASTS  SLU-5502"),
-         (0.620, "ON CHICKEN", "TENDERS  SLU-5510"),
-         (0.739, "B/S CHICKEN BREAST", "THIN CUT  SLU-6120"),
-         (0.912, "BULK B/S THIGHS", "SLU-6244")],
-        [(0.075, "BEEF BONES", "SLU-3310"),
-         (0.255, "SF FP CHICKEN", "DRUMS  SLU-7048"),
-         (0.455, "ON B/S CHICKEN", "BREASTS  SLU-5502"),
-         (0.620, "ON B/S CHICKEN", "BREAST  SLU-5504"),
-         (0.739, "HAND TRIMMED", "THIN CUT  SLU-6118"),
-         (0.912, "B/S CHICKEN BREAST", "FAMILY PACK  SLU-6110")],
-        [(0.105, "FP CUT CHICKEN", "SLU-7050"),
-         (0.285, "SF WHOLE FRYERS", "SLU-7805"),
-         (0.450, "OO WHOLE FRYER", "CHICKEN  SLU-5224"),
-         (0.620, "SF WHOLE FRYERS", "SLU-7805"),
-         (0.739, "B/S CHICKEN BREAST", "VALUE PACK  SLU-6108"),
-         (0.960, "PORK LOIN", "SLU-4410")],
-    ]
     BODY.append("<!--trim-->")
     for k in range(5):
         BODY.append(vbristle(CXM, BAND_TOP[k] + 4, DECK[k] - BAND_TOP[k] - 6))
@@ -1066,7 +1028,7 @@ def build():
         BODY.append(bristle(34, d - 5, 1692, 7))
         BODY.append(rr(34, d, 1692, 9, 2, fill="url(#deck)"))
         BODY.append(rr(34, d, 1692, 1.6, 0, fill="#7e858b", opacity=".5"))
-        BODY.append(rail(34, d + 9, 1692, 21, labels[k]))
+        BODY.append(rail(34, d + 9, 1692, 21))
 
     # ------------------------------------------------ tags, cards, blades ---
     for shelf, x, desc, d1, c1 in VALUE_TAGS:

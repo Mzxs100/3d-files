@@ -39,6 +39,9 @@ def main():
         "catalog": sorted(catalog.values(), key=lambda c: (c["group"], c["name"])),
         "variants": D.VARIANTS,
         "sections": [{"id": s["id"], "name": s["name"], "note": s["note"],
+                      "cells": [{k: c[k] for k in
+                                 ("shelf", "bay", "col", "units", "deep",
+                                  "cat", "x", "y", "w", "h")} for c in s["cells"]],
                       "slots": s["slots"], "bays": s["bays"], "tags": s["tags"],
                       "shelves": s["shelves"], "w": s["w"], "h": s["h"]}
                      for s in built],
@@ -58,8 +61,10 @@ def main():
     out = os.path.join(root, "planogram-app.html")
     with open(out, "w") as f:
         f.write(html)
-    print("wrote planogram-app.html  (%d section(s), %d spots, %d items, %d KB)"
-          % (len(built), sum(len(s["slots"]) for s in built),
+    print("wrote planogram-app.html  (%d section(s), %d cells, %d packs, "
+          "%d items, %d KB)"
+          % (len(built), sum(len(s["cells"]) for s in built),
+             sum(len(s["slots"]) for s in built),
              len(data["catalog"]), len(html) / 1024))
 
 

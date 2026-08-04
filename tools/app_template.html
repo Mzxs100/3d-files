@@ -93,6 +93,10 @@ svg.case{ width:calc(100% * var(--zoom,1)); height:auto; min-width:720px;
            gap:10px; margin-top:10px }
 
 /* ------------------------------------------------------------- the spots -- */
+.gridlines{ display:none }
+.gridlines.on{ display:block }
+.gcell{ fill:none; stroke:#9dc0e8; stroke-opacity:.30; stroke-width:1.6;
+        stroke-dasharray:5 5 }
 .slot{ cursor:pointer }
 .slot .ring{ fill:none; stroke:none; stroke-width:3 }
 .slot:hover .ring{ stroke:#9dc0e8; stroke-opacity:.85; stroke-dasharray:7 4 }
@@ -251,7 +255,7 @@ __SPRITE__
 <div class="work">
   <main>
     <div class="summary">
-      <div class="stat"><b class="num" id="sumTotal">0</b><span class="strip">Facings</span></div>
+      <div class="stat"><b class="num" id="sumTotal">0</b><span class="strip">Cells</span></div>
       <div class="stat changed"><b class="num" id="sumChanged">0</b><span class="strip">Changed</span></div>
       <div class="stat empty"><b class="num" id="sumEmpty">0</b><span class="strip">Empty</span></div>
       <div class="stat"><b class="num" id="sumItems">0</b><span class="strip">Items in bar</span></div>
@@ -262,6 +266,7 @@ __SPRITE__
       <div class="stagebar">
         <span class="strip">Drag an item onto a spot · drag the case to pan · ctrl/&#8984; + scroll to zoom</span>
         <span class="tools">
+          <button id="gridBtn" title="Show the cell grid">Grid</button>
           <span class="zoomer">
             <button id="zOut" title="Zoom out">&minus;</button>
             <span class="pct" id="zPct">100%</span>
@@ -271,13 +276,13 @@ __SPRITE__
         </span>
       </div>
       <div class="card ticket inspector" style="margin-top:12px">
-        <h2>Selected spot <span class="spotid" id="spotId"></span></h2>
+        <h2>Selected cell <span class="spotid" id="spotId"></span></h2>
         <div class="body">
           <p class="now" id="curName">Nothing selected</p>
-          <p class="where" id="curWhere">Click a pack in the case.</p>
+          <p class="where" id="curWhere">Click a cell in the case.</p>
           <div class="row">
-            <button id="emptyBtn" disabled>Empty this spot</button>
-            <button id="revertBtn" disabled>Revert spot</button>
+            <button id="emptyBtn" disabled>Empty this cell</button>
+            <button id="revertBtn" disabled>Revert cell</button>
           </div>
           <p class="hint" id="keyHint"><kbd>Esc</kbd> deselect · <kbd>Del</kbd> empty ·
             <kbd>&larr;</kbd><kbd>&rarr;</kbd> along the shelf ·
@@ -311,9 +316,13 @@ __SPRITE__
 const DATA = __DATA__;
 const CAT = {}; DATA.catalog.forEach(c => CAT[c.id] = c);
 const V = DATA.variants;
-const KEY = 'planogram-app-v1';
+const KEY = 'planogram-app-v2';
 const ORIGINAL = {};
-DATA.sections.forEach(s => ORIGINAL[s.id] = s.slots.map(x => x.cat));
+DATA.sections.forEach(s => {
+  ORIGINAL[s.id] = s.cells.map(c => c.cat);
+  s.owned = {};                              // cell index -> its pack indices
+  s.slots.forEach((sl, i) => (s.owned[sl.cell] = s.owned[sl.cell] || []).push(i));
+});
 
 let cur = DATA.sections[0].id, view = 'case', sel = null;
 let swapMode = false, swapFrom = null;
@@ -321,71 +330,80 @@ const undo = [];
 
 const sec = () => DATA.sections.find(s => s.id === cur);
 const svgOf = id => document.querySelector('.section[data-sec="' + id + '"] svg.case');
-const el = i => svgOf(cur).querySelector('.slot[data-i="' + i + '"]');
+const packs = ci => (sec().owned[ci] || []).map(
+  i => svgOf(cur).querySelector('.slot[data-i="' + i + '"]'));
 
 /* ---------------------------------------------------------------- render */
-function paint(i){
-  const s = sec().slots[i], g = el(i), u = g.querySelector('use');
-  g.classList.toggle('empty', !s.cat);
-  g.classList.toggle('changed', s.cat !== ORIGINAL[cur][i]);
-  if (!s.cat) return;
-  const c = CAT[s.cat], gid = c.gids[i % V];
-  u.setAttribute('href', '#' + gid);
-  u.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#' + gid);
-  u.setAttribute('transform', 'translate(' + s.x + ',' + s.y + ') scale(' +
-                 (s.w / c.w).toFixed(4) + ',' + (s.h / c.h).toFixed(4) + ')');
-}
-
-function bayOf(x){
-  const b = sec().bays.find(b => x < b.limit);
-  return b || sec().bays[sec().bays.length - 1];
+function paint(ci){
+  const S = sec(), c = S.cells[ci], art = CAT[c.cat];
+  (S.owned[ci] || []).forEach(i => {
+    const g = svgOf(cur).querySelector('.slot[data-i="' + i + '"]');
+    const sl = S.slots[i], u = g.querySelector('use');
+    g.classList.toggle('empty', !art);
+    g.classList.toggle('changed', c.cat !== ORIGINAL[cur][ci]);
+    if (!art) return;
+    const gid = art.gids[ci % V];
+    const k = Math.min(1, sl.cw / art.w, sl.ch / art.h);
+    const w = art.w * k, h = art.h * k;
+    const x = sl.cx + (sl.cw - w) / 2, y = sl.cy + sl.ch - h;
+    u.setAttribute('href', '#' + gid);
+    u.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#' + gid);
+    u.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) +
+                   ') scale(' + k.toFixed(4) + ')');
+  });
 }
 
 function refresh(){
   const S = sec();
-  const changed = S.slots.filter((s, i) => s.cat !== ORIGINAL[cur][i]).length;
-  document.getElementById('sumTotal').textContent = S.slots.length;
-  document.getElementById('sumChanged').textContent = changed;
+  document.getElementById('sumTotal').textContent = S.cells.length;
+  document.getElementById('sumChanged').textContent =
+    S.cells.filter((c, i) => c.cat !== ORIGINAL[cur][i]).length;
   document.getElementById('sumEmpty').textContent =
-    S.slots.filter(s => !s.cat).length;
+    S.cells.filter(c => !c.cat).length;
   document.getElementById('sumItems').textContent = DATA.catalog.length;
   document.getElementById('undoBtn').disabled = !undo.length;
 
-  const s = sel === null ? null : S.slots[sel];
-  document.getElementById('spotId').textContent = s ? 'SPOT ' + (sel + 1) : '';
+  const c = sel === null ? null : S.cells[sel];
+  document.getElementById('spotId').textContent =
+    c ? (c.shelf + 1) + '-' + c.bay + (c.col + 1) : '';
   document.getElementById('curName').textContent =
-    s ? (s.cat ? CAT[s.cat].name : 'Empty spot') : 'Nothing selected';
+    c ? (c.cat ? CAT[c.cat].name : 'Empty cell') : 'Nothing selected';
   const w = document.getElementById('curWhere');
-  if (s) w.innerHTML = 'Shelf <b>' + (s.shelf + 1) + '</b> of ' + S.shelves +
-      ' &middot; Bay ' + bayOf(s.x).code + ' &middot; ' +
-      (s.back ? 'back row' : 'front row');
-  else w.textContent = 'Click a pack in the case.';
+  if (c){
+    const track = S.cells.filter(o => o.shelf === c.shelf && o.bay === c.bay);
+    w.innerHTML = 'Shelf <b>' + (c.shelf + 1) + '</b> of ' + S.shelves +
+      ' &middot; Bay ' + c.bay + ' &middot; cell <b>' + (c.col + 1) + '</b> of ' +
+      track.length + ' &middot; ' + c.deep + ' deep';
+  } else w.textContent = 'Click a cell in the case.';
   document.getElementById('emptyBtn').disabled = sel === null;
   document.getElementById('revertBtn').disabled =
-    sel === null || S.slots[sel].cat === ORIGINAL[cur][sel];
+    sel === null || S.cells[sel].cat === ORIGINAL[cur][sel];
   document.querySelectorAll('.item').forEach(o =>
-    o.classList.toggle('cur', !!s && o.dataset.cat === s.cat));
+    o.classList.toggle('cur', !!c && o.dataset.cat === c.cat));
   if (view === 'map') buildMap();
   save();
 }
 
 /* ----------------------------------------------------------------- edits */
-function setCat(i, cat){
+function setCat(ci, cat){
   const S = sec();
-  if (S.slots[i].cat === cat) return;
-  undo.push({ sec: cur, i: i, cat: S.slots[i].cat });
-  S.slots[i].cat = cat; paint(i); refresh();
+  if (S.cells[ci].cat === cat) return;
+  undo.push({ sec: cur, i: ci, cat: S.cells[ci].cat });
+  S.cells[ci].cat = cat; paint(ci); refresh();
 }
 function swap(a, b){
   const S = sec();
-  undo.push({ sec: cur, pair: [a, b], ca: S.slots[a].cat, cb: S.slots[b].cat });
-  const t = S.slots[a].cat; S.slots[a].cat = S.slots[b].cat; S.slots[b].cat = t;
+  undo.push({ sec: cur, pair: [a, b], ca: S.cells[a].cat, cb: S.cells[b].cat });
+  const t = S.cells[a].cat; S.cells[a].cat = S.cells[b].cat; S.cells[b].cat = t;
   paint(a); paint(b); refresh();
 }
-function select(i){
-  if (sel !== null && el(sel)) el(sel).classList.remove('sel');
-  sel = i;
-  if (i !== null){ el(i).classList.add('sel'); if (zoom > 1) reveal(i); }
+function select(ci){
+  if (sel !== null) packs(sel).forEach(g => g && g.classList.remove('sel'));
+  sel = ci;
+  if (ci !== null){
+    packs(ci).forEach(g => g && g.classList.add('sel'));
+    if (zoom > 1) reveal(ci);
+  }
   refresh();
 }
 
@@ -393,7 +411,7 @@ function select(i){
 function save(){
   try {
     const out = {};
-    DATA.sections.forEach(s => out[s.id] = s.slots.map(x => x.cat));
+    DATA.sections.forEach(s => out[s.id] = s.cells.map(c => c.cat));
     localStorage.setItem(KEY, JSON.stringify(out));
   } catch (e) {}
 }
@@ -402,8 +420,8 @@ function load(){
     const v = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (!v) return;
     DATA.sections.forEach(s => {
-      if (Array.isArray(v[s.id]) && v[s.id].length === s.slots.length)
-        v[s.id].forEach((c, i) => { s.slots[i].cat = c; });
+      if (Array.isArray(v[s.id]) && v[s.id].length === s.cells.length)
+        v[s.id].forEach((c, i) => { s.cells[i].cat = c; });
     });
   } catch (e) {}
 }
@@ -434,7 +452,7 @@ function buildItems(filter){
       if (sel === null){
         const h = document.getElementById('keyHint');
         h.classList.add('warn');
-        h.textContent = 'Pick a spot in the case first, or drag this item onto one.';
+        h.textContent = 'Pick a cell in the case first, or drag this item onto one.';
         setTimeout(() => { h.classList.remove('warn'); h.innerHTML = HINT; }, 2200);
         return;
       }
@@ -454,44 +472,48 @@ const HINT = document.getElementById('keyHint').innerHTML;
 /* ------------------------------------------------------------- the case */
 function wireSection(id){
   svgOf(id).querySelectorAll('.slot').forEach(g => {
-    const i = +g.dataset.i;
+    const ci = +g.dataset.cell;
     g.addEventListener('click', ev => {
       ev.stopPropagation();
       if (panned) return;
       if (swapMode){
-        if (swapFrom === null){ swapFrom = i; g.classList.add('swap'); return; }
-        el(swapFrom).classList.remove('swap');
-        if (swapFrom !== i) swap(swapFrom, i);
+        if (swapFrom === null){
+          swapFrom = ci;
+          packs(ci).forEach(p => p.classList.add('swap'));
+          return;
+        }
+        packs(swapFrom).forEach(p => p.classList.remove('swap'));
+        if (swapFrom !== ci) swap(swapFrom, ci);
         swapFrom = null; swapMode = false;
         document.getElementById('swapBtn').classList.remove('on');
-        select(i); return;
+        select(ci); return;
       }
-      select(i);
+      select(ci);
     });
     g.addEventListener('keydown', ev => {
-      if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); select(i); }
+      if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); select(ci); }
     });
     g.addEventListener('dragover', ev => {
-      ev.preventDefault();
-      ev.dataTransfer.dropEffect = 'copy';
-      g.classList.add('over');
+      ev.preventDefault(); ev.dataTransfer.dropEffect = 'copy';
+      packs(ci).forEach(p => p.classList.add('over'));
     });
-    g.addEventListener('dragleave', () => g.classList.remove('over'));
+    g.addEventListener('dragleave', () =>
+      packs(ci).forEach(p => p.classList.remove('over')));
     g.addEventListener('drop', ev => {
-      ev.preventDefault(); g.classList.remove('over');
+      ev.preventDefault();
+      packs(ci).forEach(p => p.classList.remove('over'));
       const cat = ev.dataTransfer.getData('text/plain');
-      if (CAT[cat]){ select(i); setCat(i, cat); }
+      if (CAT[cat]){ select(ci); setCat(ci, cat); }
     });
   });
 }
 
 function showSection(id){
   cur = id; sel = null;
-  document.querySelectorAll('.section').forEach(d =>
-    d.hidden = d.dataset.sec !== id);
+  document.querySelectorAll('.section').forEach(d => d.hidden = d.dataset.sec !== id);
   document.querySelectorAll('#tabs .tab').forEach(t =>
     t.classList.toggle('on', t.dataset.sec === id));
-  sec().slots.forEach((s, i) => paint(i));
+  sec().cells.forEach((c, i) => paint(i));
   refresh();
 }
 
@@ -505,119 +527,95 @@ function showView(v){
 }
 
 /* --------------------------------------------------------- the reset map */
-function positions(){
-  const S = sec(), out = [];
-  for (let sh = 0; sh < S.shelves; sh++){
-    const mine = S.slots.map((s, i) => ({ s: s, i: i }))
-                        .filter(o => o.s.shelf === sh);
-    const front = mine.filter(o => !o.s.back).sort((a, b) => a.s.x - b.s.x);
-    const back = mine.filter(o => o.s.back);
-    const rows = S.bays.map(b => ({ bay: b, cells: [] }));
-    front.forEach(o => {
-      const b = bayOf(o.s.x);
-      const row = rows.find(r => r.bay.code === b.code);
-      const n = row.cells.length + 1;
-      const behind = back.filter(k => k.s.x < o.s.x + o.s.w &&
-                                      k.s.x + k.s.w > o.s.x);
-      row.cells.push({
-        code: (sh + 1) + '-' + b.code + n,
-        cat: o.s.cat,
-        deep: 1 + behind.length,
-        also: behind.filter(k => k.s.cat !== o.s.cat).map(k => k.s.cat),
-        tags: S.tags.filter(t => t.shelf === sh && t.x < o.s.x + o.s.w &&
-                                 t.x + t.w > o.s.x)
-      });
-    });
-    out.push(rows);
-  }
-  return out;
+function tagsFor(c){
+  return sec().tags.filter(t => t.shelf === c.shelf && t.x < c.x + c.w &&
+                                t.x + t.w > c.x);
 }
 
 function buildMap(){
-  const S = sec(), shelves = positions();
+  const S = sec();
   const cellHtml = c => {
     const item = c.cat ? CAT[c.cat] : null;
-    let h = '<div class="mcell"><div class="mcode">' + c.code +
-            c.tags.map(t => '<span class="mtag">' + t.price + '</span>').join('') +
+    let h = '<div class="mcell"><div class="mcode">' +
+            (c.shelf + 1) + '-' + c.bay + (c.col + 1) +
+            tagsFor(c).map(t => '<span class="mtag">' + t.price + '</span>').join('') +
             '</div>';
-    h += item ? thumb(item, 'mth')
-              : '<div class="mth"></div>';
+    h += item ? thumb(item, 'mth') : '<div class="mth"></div>';
     h += '<div class="mnm">' + (item ? item.short : 'Leave empty') + '</div>';
     if (c.deep > 1) h += '<div class="mmeta">' + c.deep + ' deep</div>';
-    c.also.forEach(k => { if (CAT[k])
-      h += '<div class="mmeta" style="text-transform:none;letter-spacing:0">' +
-           'also here: ' + CAT[k].short + '</div>'; });
     return h + '</div>';
   };
+  const track = (sh, bay) => S.cells.filter(c => c.shelf === sh && c.bay === bay)
+                                    .sort((a, b) => a.col - b.col);
+
   let h = '<div class="sheet"><div class="ph"><div><h1>' + S.name +
-          ' — Shelf Map</h1><p class="sub">Reset guide · ' + S.slots.length +
-          ' facings · ' + S.shelves + ' shelves · ' + S.bays.length +
-          ' bays. Shelf 1 is the top shelf; positions run left to right.</p>' +
+          ' — Shelf Map</h1><p class="sub">Reset guide · ' + S.cells.length +
+          ' cells · ' + S.shelves + ' shelves · ' + S.bays.length +
+          ' bays. Shelf 1 is the top shelf; cells run left to right.</p>' +
           '</div><div class="sign">Reviewed <i></i></div></div>';
   h += '<div class="grid"><div class="bayhead"><div class="gut"></div>' +
-       S.bays.map(b => '<div class="bh" style="flex-grow:' + b.grow +
-                       '">Bay ' + b.code + ' — ' + b.label + '</div>').join('') +
-       '</div>';
-  shelves.forEach((rows, sh) => {
+       S.bays.map(b => '<div class="bh" style="flex-grow:' + b.w + '">Bay ' +
+                       b.code + ' — ' + b.label + '</div>').join('') + '</div>';
+  for (let sh = 0; sh < S.shelves; sh++){
     h += '<div class="shelfrow"><div class="gut"><b>' + (sh + 1) +
          '</b><i>SHELF</i></div>';
-    rows.forEach(r => {
-      h += '<div class="mbay" style="flex-grow:' + r.bay.grow + '">' +
-           r.cells.map(cellHtml).join('') + '</div>';
+    S.bays.forEach(b => {
+      h += '<div class="mbay" style="flex-grow:' + b.w + '">' +
+           track(sh, b.code).map(cellHtml).join('') + '</div>';
     });
     h += '</div>';
-  });
+  }
   h += '</div><p class="mfoot">Face every label to the front. Rotate stock ' +
-       'front to back — oldest dates forward. Leave the empty spots empty ' +
+       'front to back — oldest dates forward. Leave the empty cells empty ' +
        'unless told otherwise.</p></div>';
 
   const named = ['Top shelf','Second shelf','Middle shelf','Fourth shelf',
                  'Bottom shelf'];
-  shelves.forEach((rows, sh) => {
+  for (let sh = 0; sh < S.shelves; sh++){
     h += '<div class="sheet detail"><div class="ph"><div><h1>Shelf ' + (sh + 1) +
          '</h1><p class="sub">' + (named[sh] || ('Shelf ' + (sh + 1))) +
          ' &middot; ' + S.name + '</p></div>' +
          '<div class="sign">Reviewed <i></i></div></div>';
-    rows.forEach(r => {
-      if (!r.cells.length) return;
+    S.bays.forEach(b => {
+      const cells = track(sh, b.code);
+      if (!cells.length) return;
       const seen = [], tags = [];
-      r.cells.forEach(c => c.tags.forEach(t => {
+      cells.forEach(c => tagsFor(c).forEach(t => {
         const k = t.price + t.desc;
         if (seen.indexOf(k) < 0){ seen.push(k); tags.push(t); }
       }));
-      h += '<div class="dbay"><div class="dbh"><b>Bay ' + r.bay.code + '</b> ' +
-           r.bay.label +
-           tags.map(t => ' <span class="mtag">' + t.price + ' ' + t.desc +
-                         '</span>').join('') + '</div>' +
-           '<div class="mbay wide">' + r.cells.map(cellHtml).join('') +
+      h += '<div class="dbay"><div class="dbh"><b>Bay ' + b.code + '</b> ' +
+           b.label + tags.map(t => ' <span class="mtag">' + t.price + ' ' +
+                                   t.desc + '</span>').join('') + '</div>' +
+           '<div class="mbay wide">' + cells.map(cellHtml).join('') +
            '</div></div>';
     });
     h += '</div>';
-  });
+  }
 
   const tally = {};
-  S.slots.forEach(s => {
-    if (!s.cat || !CAT[s.cat]) return;
-    const c = CAT[s.cat];
-    (tally[c.name] = tally[c.name] || { c: c, n: 0 }).n++;
+  S.cells.forEach(c => {
+    if (!c.cat || !CAT[c.cat]) return;
+    const it = CAT[c.cat];
+    const t = (tally[it.name] = tally[it.name] || { c: it, cells: 0, packs: 0 });
+    t.cells++; t.packs += c.deep;
   });
   const rows = Object.keys(tally).sort((a, b) => {
     const x = tally[a].c, y = tally[b].c;
-    return x.group === y.group ? a.localeCompare(b)
-                               : x.group.localeCompare(y.group);
+    return x.group === y.group ? a.localeCompare(b) : x.group.localeCompare(y.group);
   });
   h += '<div class="sheet"><div class="ph"><div><h1>Item Key</h1>' +
-       '<p class="sub">Every item in ' + S.name + ' and how many facings it ' +
-       'holds.</p></div></div><table class="key"><thead><tr><th></th>' +
-       '<th>Item</th><th>Group</th><th class="r">Facings</th></tr></thead><tbody>';
+       '<p class="sub">Every item in ' + S.name + ', how many cells it holds ' +
+       'and how many packs that is.</p></div></div><table class="key"><thead>' +
+       '<tr><th></th><th>Item</th><th>Group</th><th class="r">Cells</th>' +
+       '<th class="r">Packs</th></tr></thead><tbody>';
   rows.forEach(n => {
     const t = tally[n];
     h += '<tr><td>' + thumb(t.c, 'kth') + '</td><td>' + n + '</td>' +
-         '<td class="g">' + t.c.group + '</td><td class="r">' + t.n +
-         '</td></tr>';
+         '<td class="g">' + t.c.group + '</td><td class="r">' + t.cells +
+         '</td><td class="r">' + t.packs + '</td></tr>';
   });
   h += '</tbody></table></div>';
-
   document.getElementById('mapView').innerHTML = h;
 }
 
@@ -628,11 +626,16 @@ document.getElementById('tabs').onclick = e => {
 document.getElementById('views').onclick = e => {
   const b = e.target.closest('button'); if (b) showView(b.dataset.view);
 };
+document.getElementById('gridBtn').onclick = function(){
+  const on = !document.querySelector('.gridlines').classList.contains('on');
+  document.querySelectorAll('.gridlines').forEach(g => g.classList.toggle('on', on));
+  this.classList.toggle('on', on);
+};
 document.getElementById('swapBtn').onclick = function(){
   swapMode = !swapMode;
   this.classList.toggle('on', swapMode);
   if (!swapMode && swapFrom !== null){
-    el(swapFrom).classList.remove('swap'); swapFrom = null;
+    packs(swapFrom).forEach(p => p.classList.remove('swap')); swapFrom = null;
   }
 };
 document.getElementById('emptyBtn').onclick = () => { if (sel !== null) setCat(sel, null); };
@@ -643,18 +646,19 @@ document.getElementById('undoBtn').onclick = () => {
   const u = undo.pop(); if (!u) return;
   if (u.sec !== cur) showSection(u.sec);
   const S = sec();
-  if (u.pair){ S.slots[u.pair[0]].cat = u.ca; S.slots[u.pair[1]].cat = u.cb;
+  if (u.pair){ S.cells[u.pair[0]].cat = u.ca; S.cells[u.pair[1]].cat = u.cb;
                paint(u.pair[0]); paint(u.pair[1]); }
-  else { S.slots[u.i].cat = u.cat; paint(u.i); }
+  else { S.cells[u.i].cat = u.cat; paint(u.i); }
   refresh();
 };
 document.getElementById('resetBtn').onclick = () => {
-  if (!confirm('Reset every spot in ' + sec().name +
+  if (!confirm('Reset every cell in ' + sec().name +
                ' back to the photographed layout?')) return;
   undo.length = 0;
-  sec().slots.forEach((s, i) => { s.cat = ORIGINAL[cur][i]; paint(i); });
+  sec().cells.forEach((c, i) => { c.cat = ORIGINAL[cur][i]; paint(i); });
   refresh();
 };
+
 const stage = document.getElementById('stage');
 let zoom = 1;
 
@@ -672,13 +676,11 @@ function setZoom(z, cx, cy){
   stage.scrollTop = ry * nb.height - cy;
   document.getElementById('zPct').textContent = Math.round(z * 100) + '%';
 }
-
 document.getElementById('zIn').onclick = () => setZoom(zoom * 1.25);
 document.getElementById('zOut').onclick = () => setZoom(zoom / 1.25);
 document.getElementById('zFit').onclick = () => {
   setZoom(1); stage.scrollLeft = 0; stage.scrollTop = 0;
 };
-
 stage.addEventListener('wheel', e => {
   if (!(e.ctrlKey || e.metaKey)) return;
   e.preventDefault();
@@ -687,7 +689,6 @@ stage.addEventListener('wheel', e => {
           e.clientX - r.left, e.clientY - r.top);
 }, { passive: false });
 
-/* drag anywhere on the case to pan; a drag never counts as a click */
 let panFrom = null, panned = false;
 function onPanMove(e){
   if (!panFrom) return;
@@ -704,7 +705,6 @@ function onPanUp(){
   panFrom = null;
   stage.classList.remove('panning');
   window.removeEventListener('pointermove', onPanMove);
-  /* survive the click that follows this pointerup, then clear itself */
   if (panned) setTimeout(() => { panned = false; }, 0);
 }
 stage.addEventListener('pointerdown', e => {
@@ -716,19 +716,16 @@ stage.addEventListener('pointerdown', e => {
   window.addEventListener('pointermove', onPanMove);
   window.addEventListener('pointerup', onPanUp, { once: true });
 });
+stage.addEventListener('click', () => { if (!panned) select(null); });
 
-/* keep the selected spot on screen when zoomed in */
-function reveal(i){
-  const g = el(i); if (!g) return;
+function reveal(ci){
+  const g = packs(ci)[0]; if (!g) return;
   const b = g.getBoundingClientRect(), r = stage.getBoundingClientRect();
   if (b.left < r.left || b.right > r.right || b.top < r.top || b.bottom > r.bottom){
     stage.scrollLeft += (b.left + b.width / 2) - (r.left + r.width / 2);
     stage.scrollTop += (b.top + b.height / 2) - (r.top + r.height / 2);
   }
 }
-document.getElementById('printBtn').onclick = () => { showView('map'); print(); };
-document.getElementById('find').oninput = e => buildItems(e.target.value);
-stage.addEventListener('click', () => { if (!panned) select(null); });
 
 function download(name, text, type){
   const a = document.createElement('a');
@@ -741,14 +738,15 @@ document.getElementById('svgBtn').onclick = () => {
   const src = svgOf(cur), clone = src.cloneNode(true);
   clone.setAttribute('width', src.viewBox.baseVal.width);
   clone.setAttribute('height', src.viewBox.baseVal.height);
-  clone.querySelectorAll('.hit,.ring').forEach(n => n.remove());
+  clone.querySelectorAll('.hit,.ring,.gridlines').forEach(n => n.remove());
   clone.querySelectorAll('.slot').forEach(g => {
     if (g.classList.contains('empty')) g.remove();
     else { g.removeAttribute('class'); g.removeAttribute('data-i');
-           g.removeAttribute('tabindex'); g.removeAttribute('role'); }
+           g.removeAttribute('data-cell'); g.removeAttribute('tabindex');
+           g.removeAttribute('role'); }
   });
-  const defs = document.querySelector('.sprite').innerHTML;
-  clone.insertAdjacentHTML('afterbegin', defs);
+  clone.insertAdjacentHTML('afterbegin',
+    document.querySelector('.sprite').innerHTML);
   clone.removeAttribute('class');
   download(cur + '-planogram.svg',
            '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -758,33 +756,36 @@ document.getElementById('svgBtn').onclick = () => {
 document.getElementById('jsonBtn').onclick = () => {
   const out = DATA.sections.map(S => ({
     section: S.name,
-    spots: S.slots.map((s, i) => ({
-      spot: i + 1, shelf: s.shelf + 1,
-      bay: (S.bays.find(b => s.x < b.limit) || S.bays[S.bays.length - 1]).code,
-      row: s.back ? 'back' : 'front',
-      item: s.cat ? CAT[s.cat].name : null,
-      changed: s.cat !== ORIGINAL[S.id][i] || undefined
+    cells: S.cells.map((c, i) => ({
+      cell: (c.shelf + 1) + '-' + c.bay + (c.col + 1),
+      shelf: c.shelf + 1, bay: c.bay, col: c.col + 1,
+      units: c.units, deep: c.deep,
+      item: c.cat ? CAT[c.cat].name : null,
+      changed: c.cat !== ORIGINAL[S.id][i] || undefined
     }))
   }));
   download('planogram.json', JSON.stringify(out, null, 2), 'application/json');
 };
 
+document.getElementById('printBtn').onclick = () => { showView('map'); print(); };
+document.getElementById('find').oninput = e => buildItems(e.target.value);
+
 function step(dx, dy){
   const S = sec();
   if (sel === null) return select(0);
-  const c = S.slots[sel];
+  const c = S.cells[sel];
   if (dx){
-    const line = S.slots.map((s, i) => ({ s: s, i: i }))
-      .filter(o => o.s.shelf === c.shelf && o.s.back === c.back)
-      .sort((a, b) => a.s.x - b.s.x);
-    const nx = line[line.findIndex(o => o.i === sel) + dx];
+    const line = S.cells.map((o, i) => ({ o: o, i: i }))
+      .filter(k => k.o.shelf === c.shelf)
+      .sort((a, b) => a.o.x - b.o.x);
+    const nx = line[line.findIndex(k => k.i === sel) + dx];
     if (nx) select(nx.i);
     return;
   }
-  const line = S.slots.map((s, i) => ({ s: s, i: i }))
-                      .filter(o => o.s.shelf === c.shelf + dy);
+  const line = S.cells.map((o, i) => ({ o: o, i: i }))
+                      .filter(k => k.o.shelf === c.shelf + dy);
   if (!line.length) return;
-  line.sort((a, b) => Math.abs(a.s.x - c.x) - Math.abs(b.s.x - c.x));
+  line.sort((a, b) => Math.abs(a.o.x - c.x) - Math.abs(b.o.x - c.x));
   select(line[0].i);
 }
 

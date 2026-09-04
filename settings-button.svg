@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Settings button">
+  <title>Settings button</title>
+  <!-- Taskbar-style settings button: dark tile with the gear glyph. -->
+  <rect width="48" height="48" fill="#1f1f1f"/>
+  <g transform="translate(12 12)" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round">
+    <path fill-rule="evenodd" d="M19.39 8.94 L22.41 9.98 L22.41 14.02 L19.39 15.06 L19.39 15.06 L20.79 17.93 L17.93 20.79 L15.06 19.39 L15.06 19.39 L14.02 22.41 L9.98 22.41 L8.94 19.39 L8.94 19.39 L6.07 20.79 L3.21 17.93 L4.61 15.06 L4.61 15.06 L1.59 14.02 L1.59 9.98 L4.61 8.94 L4.61 8.94 L3.21 6.07 L6.07 3.21 L8.94 4.61 L8.94 4.61 L9.98 1.59 L14.02 1.59 L15.06 4.61 L15.06 4.61 L17.93 3.21 L20.79 6.07 L19.39 8.94 Z M16.8 12 A4.8 4.8 0 1 0 7.2 12 A4.8 4.8 0 1 0 16.8 12 Z"/>
+  </g>
+</svg>

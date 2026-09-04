@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Start button">
+  <title>Start button</title>
+  <!-- Taskbar-style start button: dark tile with the flat four-pane glyph. -->
+  <rect width="48" height="48" fill="#1f1f1f"/>
+  <g fill="#ffffff">
+    <rect x="15" y="15" width="8" height="8" rx="1.25"/>
+    <rect x="25" y="15" width="8" height="8" rx="1.25"/>
+    <rect x="15" y="25" width="8" height="8" rx="1.25"/>
+    <rect x="25" y="25" width="8" height="8" rx="1.25"/>
+  </g>
+</svg>
